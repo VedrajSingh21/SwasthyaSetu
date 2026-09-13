@@ -1,11 +1,8 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { useForm } from "react-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { ArrowLeft, Phone, Lock } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Phone, Lock, CheckCircle2 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../components/ui/Card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card"
 import { Input } from "../components/ui/Input"
 import { Button } from "../components/ui/Button"
 
