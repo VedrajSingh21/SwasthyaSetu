@@ -30,9 +30,9 @@ export default function HospitalLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex items-center justify-center p-4 relative overflow-hidden">
       {/* Decorative background elements */}
-      <div className="absolute top-0 right-0 w-full h-96 bg-gradient-to-b from-blue-100 to-transparent opacity-50 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-full h-96 bg-linear-to-b from-blue-100 to-transparent opacity-50 pointer-events-none" />
       <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 pointer-events-none" />
 
