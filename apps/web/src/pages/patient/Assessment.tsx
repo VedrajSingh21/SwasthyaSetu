@@ -158,7 +158,7 @@ export default function Assessment() {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] flex flex-col relative">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-100 flex flex-col relative">
         <div className="flex-1 p-6 sm:p-8">
           <AnimatePresence mode="wait">
             {isSubmitting ? (
@@ -243,7 +243,7 @@ export default function Assessment() {
                 
                 {currentStepData.type === 'text' && (
                   <textarea 
-                    className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none resize-none h-32 text-slate-700"
+                    className="w-full p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none resize-none h-32 text-slate-700"
                     placeholder={currentStepData.placeholder}
                     value={formData[currentStepData.id] || ''}
                     onChange={(e) => setFormData({...formData, [currentStepData.id]: e.target.value})}

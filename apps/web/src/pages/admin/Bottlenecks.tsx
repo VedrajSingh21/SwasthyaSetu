@@ -80,7 +80,7 @@ export default function AdminBottlenecks() {
         {/* Right Column: Detail Panel */}
         <div className="lg:col-span-2">
           {!selectedBottleneck ? (
-            <div className="h-full min-h-[400px] bg-slate-50 border border-slate-200 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400">
+            <div className="h-full min-h-100 bg-slate-50 border border-slate-200 border-dashed rounded-xl flex flex-col items-center justify-center text-slate-400">
               <Activity className="w-16 h-16 mb-4 opacity-50" />
               <p className="font-medium">Select a bottleneck to view intelligence report</p>
             </div>
@@ -102,7 +102,7 @@ export default function AdminBottlenecks() {
                   
                   {/* DETECT */}
                   <div className="relative pl-8">
-                    <div className="absolute -left-[11px] top-1 bg-white p-1 rounded-full border-2 border-indigo-600">
+                    <div className="absolute -left-2.75 top-1 bg-white p-1 rounded-full border-2 border-indigo-600">
                       <div className="w-2 h-2 bg-indigo-600 rounded-full" />
                     </div>
                     <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-2">1. Detect</h3>
@@ -126,7 +126,7 @@ export default function AdminBottlenecks() {
 
                   {/* EXPLAIN */}
                   <div className="relative pl-8">
-                    <div className="absolute -left-[11px] top-1 bg-white p-1 rounded-full border-2 border-indigo-600">
+                    <div className="absolute -left-2.75 top-1 bg-white p-1 rounded-full border-2 border-indigo-600">
                       <div className="w-2 h-2 bg-indigo-600 rounded-full" />
                     </div>
                     <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-2">2. Explain</h3>
@@ -146,7 +146,7 @@ export default function AdminBottlenecks() {
 
                   {/* ACT */}
                   <div className="relative pl-8">
-                    <div className="absolute -left-[11px] top-1 bg-white p-1 rounded-full border-2 border-indigo-600">
+                    <div className="absolute -left-2.75 top-1 bg-white p-1 rounded-full border-2 border-indigo-600">
                       <div className="w-2 h-2 bg-indigo-600 rounded-full" />
                     </div>
                     <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-wider mb-2">3. Act</h3>

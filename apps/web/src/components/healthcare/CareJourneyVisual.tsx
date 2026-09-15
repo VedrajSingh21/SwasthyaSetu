@@ -11,7 +11,7 @@ export function CareJourneyVisual({ journey, className = "" }: CareJourneyVisual
     <div className={`bg-white border border-slate-200 rounded-xl p-6 shadow-sm ${className}`}>
       <h3 className="text-lg font-bold text-slate-800 mb-6">Your Care Journey</h3>
       <div className="relative">
-        <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-slate-100 z-0"></div>
+        <div className="absolute left-3.75 top-4 bottom-4 w-0.5 bg-slate-100 z-0"></div>
         <div className="space-y-6 relative z-10">
           {journey.steps.map((step) => {
             const isCompleted = step.status === "Completed";
@@ -36,7 +36,7 @@ export function CareJourneyVisual({ journey, className = "" }: CareJourneyVisual
                     </p>
                   )}
                   {isBlocked && (
-                    <div className="mt-2 text-sm text-amber-600 flex items-center gap-1 font-medium bg-amber-50 px-3 py-1.5 rounded-md inline-flex">
+                    <div className="mt-2 text-sm text-amber-600 flex items-center gap-1 font-medium bg-amber-50 px-3 py-1.5 rounded-md">
                       <Clock className="w-4 h-4" /> Finding an alternative...
                     </div>
                   )}

@@ -38,7 +38,7 @@ export default function AdminDashboard() {
           <div className="text-slate-500 text-sm font-medium mb-1">Delayed Referrals</div>
           <div className="text-2xl font-bold text-amber-600">38</div>
         </div>
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-rose-200 bg-rose-50/30">
+        <div className="p-5 rounded-xl shadow-sm border border-rose-200 bg-rose-50/30">
           <div className="text-rose-600 text-sm font-medium mb-1 flex items-center gap-1"><AlertTriangle className="w-4 h-4"/> Blocked Requirements</div>
           <div className="text-2xl font-bold text-rose-700">14</div>
         </div>
