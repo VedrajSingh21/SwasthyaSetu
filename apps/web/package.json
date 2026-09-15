@@ -12,6 +12,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
     "@repo/ui": "*",
+    "@swasthyasetu/types": "*",
     "axios": "^1.20.0",
     "clsx": "^2.1.1",
     "framer-motion": "^13.2.0",
