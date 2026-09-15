@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Outlet, Link } from "react-router-dom";
-import { Activity, Bell } from "lucide-react";
+import { Activity, Bell, Wifi, WifiOff, CheckCircle2, Clock } from "lucide-react";
 
 export function PatientLayout() {
+  const [lowConnectivity, setLowConnectivity] = useState(false);
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -13,6 +16,18 @@ export function PatientLayout() {
             <span className="text-lg font-semibold tracking-tight">SwasthyaSetu</span>
           </Link>
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setLowConnectivity(!lowConnectivity)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
+                lowConnectivity 
+                  ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' 
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+              }`}
+              title="Toggle Low Connectivity Mode"
+            >
+              {lowConnectivity ? <WifiOff className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
+              <span className="hidden sm:inline">{lowConnectivity ? 'Low Connectivity' : 'Connected'}</span>
+            </button>
             <button className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors">
               <Bell className="w-5 h-5" />
             </button>
@@ -22,6 +37,34 @@ export function PatientLayout() {
           </div>
         </div>
       </header>
+
+      {lowConnectivity && (
+        <div className="bg-amber-50 border-b border-amber-100 shadow-sm z-40 relative">
+          <div className="max-w-5xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-amber-900">LOW CONNECTIVITY MODE</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 tracking-wide uppercase border border-amber-200">
+                Demo Simulation
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <span className="flex items-center gap-1.5 text-amber-800 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-amber-600" /> Assessment available
+              </span>
+              <span className="flex items-center gap-1.5 text-amber-800 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-amber-600" /> Bundle preparation
+              </span>
+              <div className="flex items-center gap-4 text-amber-700 ml-auto sm:ml-0">
+                <span>Pending sync: 2</span>
+                <button className="flex items-center gap-1 text-amber-700 hover:text-amber-900 font-medium underline underline-offset-2">
+                  <Clock className="w-4 h-4" /> Sync when online
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-6 lg:p-8">
         <Outlet />
       </main>
