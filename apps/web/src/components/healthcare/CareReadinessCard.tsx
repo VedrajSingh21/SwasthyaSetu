@@ -10,7 +10,7 @@ interface CareReadinessCardProps {
 }
 
 export function CareReadinessCard({ facility, readiness, className = "", isRecommended = false, hideFacilityName = false }: CareReadinessCardProps) {
-  const isReady = readiness.overallReadinessStatus === "Care Ready";
+  const isReady = readiness.overallReadinessStatus === "CARE READY";
   
   return (
     <div className={`relative bg-white border rounded-xl overflow-hidden shadow-sm transition-all ${isRecommended ? 'border-teal-500 shadow-teal-100 shadow-md ring-1 ring-teal-500' : 'border-slate-200'} ${className}`}>

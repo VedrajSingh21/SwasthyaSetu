@@ -1,6 +1,6 @@
 import type { 
   Patient, Facility, CareBundle, CareRequirement, 
-  CareReadiness, CareJourney, DistrictBottleneck 
+  CareReadiness, CareJourney, DistrictBottleneck, Referral
 } from "@swasthyasetu/types";
 
 // NOTE: All data here is SIMULATED DEMO DATA. 
@@ -41,7 +41,7 @@ export const mockCareReadiness: CareReadiness[] = [
     diagnosticAvailability: false,
     appointmentAvailability: true,
     facilityCapacity: 10,
-    overallReadinessStatus: "Not fully care-ready",
+    overallReadinessStatus: "NOT CARE-READY",
     estimatedWaitTime: 120,
   },
   {
@@ -51,7 +51,7 @@ export const mockCareReadiness: CareReadiness[] = [
     diagnosticAvailability: true,
     appointmentAvailability: true,
     facilityCapacity: 5,
-    overallReadinessStatus: "Care Ready",
+    overallReadinessStatus: "CARE READY",
     estimatedWaitTime: 45,
   }
 ];
@@ -70,21 +70,56 @@ export const mockCareJourney: CareJourney = {
   ]
 };
 
+export const mockReferrals: Referral[] = [
+  {
+    id: "ref-1024",
+    patientId: "p1",
+    sourceFacilityId: "f2", // PHC
+    targetFacilityId: "f1", // DH
+    careBundleId: "cb1",
+    status: "Pending Review",
+    date: new Date().toISOString(),
+    priority: "High",
+    completedServices: []
+  },
+  {
+    id: "ref-1025",
+    patientId: "p2",
+    sourceFacilityId: "f2", // PHC
+    targetFacilityId: "f1", // DH
+    careBundleId: "cb1",
+    status: "Accepted",
+    date: new Date().toISOString(),
+    priority: "Medium",
+    completedServices: []
+  }
+];
+
 export const mockDistrictBottlenecks: DistrictBottleneck[] = [
   {
     id: "db1",
     district: "Pune",
-    issue: "Cardiology referrals delayed",
+    issue: "CARDIOLOGY REFERRALS",
     affectedPercentage: 38,
     primaryBottleneck: "Specialist capacity",
-    recommendedAction: "Increase cardiology referral capacity at Facility X"
+    affectedFacilities: ["Kothrud PHC", "Rural Hospital B"],
+    impact: "High",
+    impactedReferrals: 24,
+    currentState: "DELAYED",
+    affectedServices: ["Cardiology Consultation"],
+    recommendedAction: "Route new cardiology referrals to facilities with available specialist capacity."
   },
   {
     id: "db2",
     district: "Pune",
-    issue: "Diagnostics incomplete",
+    issue: "DIAGNOSTICS",
     affectedPercentage: 27,
-    primaryBottleneck: "ECG availability",
-    recommendedAction: "Repair ECG machine at District Hospital"
+    primaryBottleneck: "ECG unavailable",
+    affectedFacilities: ["Rural Hospital B", "Facility C"],
+    impact: "High",
+    impactedReferrals: 14,
+    currentState: "BLOCKED",
+    affectedServices: ["Cardiology + ECG + Blood Test"],
+    recommendedAction: "Route ECG-dependent Care Bundles to care-ready facilities."
   }
 ];

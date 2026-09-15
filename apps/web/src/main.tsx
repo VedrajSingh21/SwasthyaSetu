@@ -23,7 +23,10 @@ import PatientFollowUp from './pages/patient/FollowUp.tsx'
 // Dashboards
 import PatientDashboard from './pages/patient/Dashboard.tsx'
 import FacilityDashboard from './pages/facility/Dashboard.tsx'
+import FacilityReferrals from './pages/facility/Referrals.tsx'
+import FacilityCapacity from './pages/facility/Capacity.tsx'
 import AdminDashboard from './pages/admin/Dashboard.tsx'
+import AdminBottlenecks from './pages/admin/Bottlenecks.tsx'
 
 import './index.css'
 
@@ -59,8 +62,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/facility/dashboard" replace /> },
       { path: 'dashboard', element: <FacilityDashboard /> },
-      { path: 'referrals', element: <div className="p-8">Referrals</div> },
-      { path: 'capacity', element: <div className="p-8">Capacity</div> },
+      { path: 'referrals', element: <FacilityReferrals /> },
+      { path: 'capacity', element: <FacilityCapacity /> },
     ]
   },
   {
@@ -69,7 +72,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
       { path: 'dashboard', element: <AdminDashboard /> },
-      { path: 'bottlenecks', element: <div className="p-8">Bottlenecks</div> },
+      { path: 'bottlenecks', element: <AdminBottlenecks /> },
     ]
   }
 ])
