@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, boolean, integer, doublePrecision, uuid } from 'drizzle-orm/pg-core';
-import { facilityTypeEnum } from './enums';
-import { districts } from './districts';
-import { services } from './services';
+import { facilityTypeEnum } from './enums.js';
+import { districts } from './districts.js';
+import { services } from './services.js';
 
 export const facilities = pgTable('facilities', {
   id: uuid('id').defaultRandom().primaryKey(),

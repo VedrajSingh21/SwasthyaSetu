@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { districts } from './districts';
-import { facilities } from './facilities';
-import { bottleneckStatusEnum, priorityEnum } from './enums';
+import { districts } from './districts.js';
+import { facilities } from './facilities.js';
+import { bottleneckStatusEnum, priorityEnum } from './enums.js';
 
 export const bottlenecks = pgTable('bottlenecks', {
   id: uuid('id').defaultRandom().primaryKey(),

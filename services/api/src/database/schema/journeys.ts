@@ -1,8 +1,8 @@
 import { pgTable, text, timestamp, jsonb, uuid } from 'drizzle-orm/pg-core';
-import { patients } from './patients';
-import { careBundles } from './care';
-import { referrals } from './referrals';
-import { careJourneyStageEnum } from './enums';
+import { patients } from './patients.js';
+import { careBundles } from './care.js';
+import { referrals } from './referrals.js';
+import { careJourneyStageEnum } from './enums.js';
 
 export const careJourneys = pgTable('care_journeys', {
   id: uuid('id').defaultRandom().primaryKey(),

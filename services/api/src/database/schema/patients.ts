@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { users } from './users';
-import { districts } from './districts';
+import { users } from './users.js';
+import { districts } from './districts.js';
 
 export const patients = pgTable('patients', {
   id: uuid('id').defaultRandom().primaryKey(),
