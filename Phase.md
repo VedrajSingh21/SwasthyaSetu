@@ -38,7 +38,7 @@
 - **Dependencies:** Phase 2.
 - **Acceptance Criteria:** Engine accurately flags facilities as NOT CARE-READY when required resources are toggled off.
 - **What NOT to build:** The actual rerouting workflow (handled in Phase 4).
-- **Status:** Planned.
+- **Status:** Partially Implemented (Phase 3 Task 1-4 — Care Readiness API Hardening implemented).
 
 ## Phase 4 — Referral & Dynamic Routing Engine
 - **Objective:** Build the closed-loop referral and rerouting mechanism.

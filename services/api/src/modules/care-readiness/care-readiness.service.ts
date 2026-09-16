@@ -9,10 +9,47 @@ export interface FacilityReadinessInput {
   facility: any;
   bundleId: string;
   bundle: any;
-  requiredServices: string[];
+  requirements: any[];
   availableServices: string[];
   unavailableServices: string[];
   capacityInformation: any[];
+}
+
+export interface RequirementReadiness {
+  serviceId: string;
+  serviceName: string;
+  status: 'AVAILABLE' | 'UNAVAILABLE' | 'CAPACITY_FULL' | 'NO_CAPACITY_DATA';
+  capacity?: {
+    capacity: number;
+    currentLoad: number;
+    remaining: number;
+  };
+}
+
+export interface BlockingReason {
+  code: 'SERVICE_UNAVAILABLE' | 'CAPACITY_FULL' | 'NO_CAPACITY_DATA';
+  serviceId: string;
+  serviceName: string;
+  message: string;
+}
+
+export interface FacilityReadinessResponse {
+  facilityId: string;
+  facilityName: string;
+  bundleId: string;
+  bundleName: string;
+  status: 'CARE_READY' | 'NOT_CARE_READY';
+  readinessScore: number;
+  requirements: RequirementReadiness[];
+  blockingReasons: BlockingReason[];
+}
+
+export interface MultiFacilityReadinessResponse {
+  bundle: {
+    id: string;
+    name: string;
+  };
+  facilities: Omit<FacilityReadinessResponse, 'bundleId' | 'bundleName'>[];
 }
 
 @Injectable()
@@ -71,10 +108,173 @@ export class CareReadinessService {
       facility,
       bundleId,
       bundle,
-      requiredServices,
+      requirements,
       availableServices,
       unavailableServices,
       capacityInformation,
+    };
+  }
+
+  evaluateReadiness(input: FacilityReadinessInput): FacilityReadinessResponse {
+    const reqResults: RequirementReadiness[] = [];
+    const blockingReasons: BlockingReason[] = [];
+    let fulfillableCount = 0;
+
+    for (const req of input.requirements) {
+      const serviceId = req.serviceId;
+      const serviceName = req.name;
+
+      if (input.unavailableServices.includes(serviceId)) {
+        reqResults.push({
+          serviceId,
+          serviceName,
+          status: 'UNAVAILABLE',
+        });
+        blockingReasons.push({
+          code: 'SERVICE_UNAVAILABLE',
+          serviceId,
+          serviceName,
+          message: `${serviceName} is not currently available at this facility`,
+        });
+        continue;
+      }
+
+      const capInfo = input.capacityInformation.find((c: any) => c.serviceId === serviceId);
+      if (!capInfo) {
+        reqResults.push({
+          serviceId,
+          serviceName,
+          status: 'NO_CAPACITY_DATA',
+        });
+        blockingReasons.push({
+          code: 'NO_CAPACITY_DATA',
+          serviceId,
+          serviceName,
+          message: `Capacity data for ${serviceName} is missing`,
+        });
+        continue;
+      }
+
+      const remaining = capInfo.capacity - capInfo.currentLoad;
+      if (remaining <= 0) {
+        reqResults.push({
+          serviceId,
+          serviceName,
+          status: 'CAPACITY_FULL',
+          capacity: {
+            capacity: capInfo.capacity,
+            currentLoad: capInfo.currentLoad,
+            remaining,
+          }
+        });
+        blockingReasons.push({
+          code: 'CAPACITY_FULL',
+          serviceId,
+          serviceName,
+          message: `${serviceName} is at full capacity`,
+        });
+        continue;
+      }
+
+      // AVAILABLE
+      fulfillableCount++;
+      reqResults.push({
+        serviceId,
+        serviceName,
+        status: 'AVAILABLE',
+        capacity: {
+          capacity: capInfo.capacity,
+          currentLoad: capInfo.currentLoad,
+          remaining,
+        }
+      });
+    }
+
+    const total = input.requirements.length;
+    let readinessScore = 100;
+    let status: 'CARE_READY' | 'NOT_CARE_READY' = 'CARE_READY';
+
+    if (total > 0) {
+      readinessScore = Math.round((fulfillableCount / total) * 100);
+      if (fulfillableCount < total) {
+        status = 'NOT_CARE_READY';
+      }
+    }
+
+    return {
+      facilityId: input.facilityId,
+      facilityName: input.facility.name,
+      bundleId: input.bundleId,
+      bundleName: input.bundle.title,
+      status,
+      readinessScore,
+      requirements: reqResults,
+      blockingReasons,
+    };
+  }
+
+  async getFacilityReadiness(facilityId: string, bundleId: string): Promise<FacilityReadinessResponse> {
+    const input = await this.getReadinessInput(facilityId, bundleId);
+    return this.evaluateReadiness(input);
+  }
+
+  async getAllFacilitiesReadiness(bundleId: string): Promise<MultiFacilityReadinessResponse> {
+    const bundleResult = await this.db.select().from(careBundles).where(eq(careBundles.id, bundleId));
+    if (!bundleResult || bundleResult.length === 0) {
+      throw new NotFoundException(`Care Bundle with ID ${bundleId} not found`);
+    }
+    const bundle = bundleResult[0];
+
+    const allFacilities = await this.db.select().from(facilities).where(eq(facilities.active, true));
+    
+    if (allFacilities.length === 0) {
+      return {
+        bundle: {
+          id: bundle.id,
+          name: bundle.title,
+        },
+        facilities: [],
+      };
+    }
+
+    const facilityResults = [];
+    for (const facility of allFacilities) {
+      const input = await this.getReadinessInput(facility.id, bundleId);
+      const readiness = this.evaluateReadiness(input);
+      facilityResults.push(readiness);
+    }
+
+    // Rank facilities
+    facilityResults.sort((a, b) => {
+      // 1. CARE_READY before NOT_CARE_READY
+      if (a.status === 'CARE_READY' && b.status === 'NOT_CARE_READY') return -1;
+      if (a.status === 'NOT_CARE_READY' && b.status === 'CARE_READY') return 1;
+
+      // 2. Higher readinessScore first
+      if (a.readinessScore !== b.readinessScore) {
+        return b.readinessScore - a.readinessScore;
+      }
+
+      // 3. If readinessScore is equal, prefer the facility with fewer blocking reasons
+      if (a.blockingReasons.length !== b.blockingReasons.length) {
+        return a.blockingReasons.length - b.blockingReasons.length;
+      }
+
+      // 4. If still equal, sort by facility name alphabetically
+      return a.facilityName.localeCompare(b.facilityName);
+    });
+
+    const mappedFacilities = facilityResults.map(r => {
+      const { bundleId, bundleName, ...rest } = r;
+      return rest;
+    });
+
+    return {
+      bundle: {
+        id: bundle.id,
+        name: bundle.title,
+      },
+      facilities: mappedFacilities as any,
     };
   }
 }
