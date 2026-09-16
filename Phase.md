@@ -48,7 +48,7 @@
 - **Dependencies:** Phase 3.
 - **Acceptance Criteria:** A "Cannot Fulfil" action at a facility automatically routes the patient to the next CARE READY facility.
 - **What NOT to build:** External SMS/WhatsApp notifications (future scope).
-- **Status:** Planned.
+- **Status:** Complete (Phase 4 Task 1, 2, 3, 4 implemented).
 
 ## Phase 5 — AI Integration
 - **Objective:** Replace frontend simulated AI with actual LLM calls for care requirement extraction.
