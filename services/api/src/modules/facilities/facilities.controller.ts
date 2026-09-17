@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe } from '@nestjs/common';
 import { FacilitiesService } from './facilities.service.js';
 
 @Controller('facilities')
@@ -11,7 +11,7 @@ export class FacilitiesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.facilitiesService.findOne(id);
   }
 }

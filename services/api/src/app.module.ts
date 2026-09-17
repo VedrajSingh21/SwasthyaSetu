@@ -7,6 +7,7 @@ import { CareReadinessModule } from './modules/care-readiness/care-readiness.mod
 import { DynamicRoutingModule } from './modules/dynamic-routing/dynamic-routing.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
 import { AssessmentsModule } from './modules/assessments/assessments.module.js';
+import { InteroperabilityModule } from './modules/interoperability/interoperability.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AssessmentsModule } from './modules/assessments/assessments.module.js';
     DynamicRoutingModule,
     AiModule,
     AssessmentsModule,
+    InteroperabilityModule,
   ],
 })
 export class AppModule {}
