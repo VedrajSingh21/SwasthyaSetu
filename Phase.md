@@ -139,21 +139,22 @@
 - CORS is configured for development origins only.
 - No backend clinical logic was modified.
 
-## Phase 8 — End-to-End Integration
-**Status:** IN PROGRESS
-- **Objective:** Replace frontend mock data with real backend endpoints.
-- **Scope:** API client integration, state management updates.
-- **Inputs:** Phase 1 frontend, Phase 2-4 backend.
-- **Outputs:** Fully functional integrated application.
-- **Dependencies:** All previous phases.
-- **Acceptance Criteria:** The entire Find → Assess → Refer → Reach → Treat → Follow-up journey works end-to-end against the real database.
+### Phase 8: End-to-End Integration
+Goal: Connect React frontend to Supabase via NestJS backend.
+
+- [x] **Task 1:** API Client Foundation (Centralized client with robust error handling/timeouts) - ✅ COMPLETE
+- [x] **Task 2:** Patient Dashboard Read-Only Integration (Fetch patient, bundles, referrals, journeys) - ✅ COMPLETE
+- [ ] **Task 3:** Assessment to Care Bundle Flow (Submit assessment to API -> AI processing -> render bundle)
+- [ ] **Task 4:** Care Readiness Selection (Map recommended facilities and select destination)
+- [ ] **Task 5:** Dynamic Routing Integration (Handle referral creation and failover rerouting)
+- [ ] **Task 6:** Facility Dashboard Workflow (Acknowledge inbound referrals, update status)
+- [ ] **Task 7:** End-to-End Regression Testing (Ensure offline syncing still functions across the loop) 
 - **What NOT to build:** New features outside the core journey.
 
 ### Task 1: API Client & Environment (COMPLETED)
 - Created centralized `api.ts` with error handling.
 - Configured safe `VITE_` environment variables.
 
-### Task 2: Patient Dashboard Integration
 - **Status:** PENDING
 
 ## Phase 9 — QA, Demo Hardening & SIH Submission
