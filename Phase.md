@@ -138,15 +138,23 @@
 - No authentication or authorization (RBAC) was added in this phase.
 - CORS is configured for development origins only.
 - No backend clinical logic was modified.
+
 ## Phase 8 — End-to-End Integration
-- **Objective:** Connect the frontend to the real backend APIs, replacing all mock data.
+**Status:** IN PROGRESS
+- **Objective:** Replace frontend mock data with real backend endpoints.
 - **Scope:** API client integration, state management updates.
 - **Inputs:** Phase 1 frontend, Phase 2-4 backend.
 - **Outputs:** Fully functional integrated application.
 - **Dependencies:** All previous phases.
 - **Acceptance Criteria:** The entire Find → Assess → Refer → Reach → Treat → Follow-up journey works end-to-end against the real database.
 - **What NOT to build:** New features outside the core journey.
-- **Status:** Planned.
+
+### Task 1: API Client & Environment (COMPLETED)
+- Created centralized `api.ts` with error handling.
+- Configured safe `VITE_` environment variables.
+
+### Task 2: Patient Dashboard Integration
+- **Status:** PENDING
 
 ## Phase 9 — QA, Demo Hardening & SIH Submission
 - **Objective:** Final testing, bug fixing, and preparation for deployment/presentation.
