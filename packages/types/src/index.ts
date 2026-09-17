@@ -114,3 +114,45 @@ export interface DistrictBottleneck {
   affectedServices: string[];
   recommendedAction: string;
 }
+
+// -----------------------------------------------------------------------------
+// Offline Architecture Foundation Types (Phase 6)
+// -----------------------------------------------------------------------------
+
+export type NetworkStatus = 'ONLINE' | 'OFFLINE';
+
+export type SyncStatus = 'PENDING' | 'SYNCING' | 'SYNCED' | 'FAILED' | 'CONFLICT';
+
+export type ConflictStatus = 'UNRESOLVED' | 'RESOLVED_CLIENT' | 'RESOLVED_SERVER';
+
+export type OperationType = 'CREATE' | 'UPDATE' | 'DELETE';
+
+export interface OfflineRecord<T = any> {
+  id: string; // The local or server ID of the record
+  entityType: string; // e.g., 'Referral', 'Assessment', 'Patient'
+  payload: T; // The actual data
+  lastModifiedLocallyAt: string; // ISO string
+  syncStatus: SyncStatus;
+}
+
+export interface SyncOperation<T = any> {
+  operationId: string; // Unique ID for this specific operation
+  entityType: string; // e.g., 'Referral', 'Assessment', 'Patient'
+  entityId: string; // ID of the entity being acted upon
+  operationType: OperationType;
+  payload: T; // The data for CREATE/UPDATE operations
+  createdAt: string; // ISO string
+  retryCount: number;
+  lastRetryAt?: string; // ISO string
+  syncStatus: SyncStatus;
+  conflictStatus?: ConflictStatus;
+  errorMessage?: string;
+}
+
+export interface SyncResult {
+  success: boolean;
+  operationId: string;
+  serverAssignedId?: string; // For CREATE operations where server provides ID
+  error?: string;
+  conflictDetails?: any;
+}

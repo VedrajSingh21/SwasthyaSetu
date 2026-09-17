@@ -1,9 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, Link } from "react-router-dom";
-import { Activity, Bell, Wifi, WifiOff, CheckCircle2, Clock } from "lucide-react";
+import { Activity, Bell, Wifi, WifiOff, CheckCircle2, Clock, RefreshCw } from "lucide-react";
+import { useNetworkStatus } from "../../lib/offline/network";
+import { syncService } from "../../lib/offline/sync";
+import { offlineDb } from "../../lib/offline/db";
 
 export function PatientLayout() {
   const [lowConnectivity, setLowConnectivity] = useState(false);
+  const networkStatus = useNetworkStatus();
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  useEffect(() => {
+    // Check pending count periodically
+    const checkPending = async () => {
+      try {
+        const ops = await offlineDb.getOperationsByStatus('PENDING');
+        setPendingCount(ops.length);
+      } catch (err) {
+        console.error('Failed to get pending operations', err);
+      }
+    };
+    checkPending();
+    const interval = setInterval(checkPending, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (networkStatus === 'ONLINE' && pendingCount > 0) {
+      handleSync();
+    }
+  }, [networkStatus, pendingCount]);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncService.syncPendingOperations();
+      // Update count after sync
+      const ops = await offlineDb.getOperationsByStatus('PENDING');
+      setPendingCount(ops.length);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
@@ -16,6 +55,28 @@ export function PatientLayout() {
             <span className="text-lg font-semibold tracking-tight">SwasthyaSetu</span>
           </Link>
           <div className="flex items-center gap-4">
+            
+            {networkStatus === 'OFFLINE' ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                <WifiOff className="w-4 h-4" />
+                <span className="hidden sm:inline">Offline Mode</span>
+              </div>
+            ) : pendingCount > 0 ? (
+              <button 
+                onClick={handleSync}
+                disabled={isSyncing}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-teal-50 text-teal-700 border border-teal-200 hover:bg-teal-100 disabled:opacity-50 transition-colors"
+              >
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isSyncing ? 'Syncing...' : `Sync ${pendingCount} Items`}</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-slate-50 text-slate-600 border border-slate-200">
+                <Wifi className="w-4 h-4" />
+                <span className="hidden sm:inline">Connected</span>
+              </div>
+            )}
+
             <button 
               onClick={() => setLowConnectivity(!lowConnectivity)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border ${
@@ -23,10 +84,9 @@ export function PatientLayout() {
                   ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' 
                   : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
               }`}
-              title="Toggle Low Connectivity Mode"
+              title="Toggle Simulated Low Connectivity Mode"
             >
               {lowConnectivity ? <WifiOff className="w-4 h-4" /> : <Wifi className="w-4 h-4" />}
-              <span className="hidden sm:inline">{lowConnectivity ? 'Low Connectivity' : 'Connected'}</span>
             </button>
             <button className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors">
               <Bell className="w-5 h-5" />
@@ -55,8 +115,8 @@ export function PatientLayout() {
                 <CheckCircle2 className="w-4 h-4 text-amber-600" /> Bundle preparation
               </span>
               <div className="flex items-center gap-4 text-amber-700 ml-auto sm:ml-0">
-                <span>Pending sync: 2</span>
-                <button className="flex items-center gap-1 text-amber-700 hover:text-amber-900 font-medium underline underline-offset-2">
+                <span>Pending sync: {pendingCount}</span>
+                <button onClick={handleSync} className="flex items-center gap-1 text-amber-700 hover:text-amber-900 font-medium underline underline-offset-2">
                   <Clock className="w-4 h-4" /> Sync when online
                 </button>
               </div>

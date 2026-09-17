@@ -62,13 +62,37 @@
 
 ## Phase 6 — Offline/Low Connectivity
 - **Objective:** Implement true offline-first capabilities for field workers.
-- **Scope:** Local database (e.g., WatermelonDB/SQLite), sync engine, conflict resolution.
-- **Inputs:** Worker app data entry.
-- **Outputs:** Reliable sync when connectivity is restored.
-- **Dependencies:** Phase 2, Phase 4.
-- **Acceptance Criteria:** ASHA workers can complete a referral journey entirely offline, and the data syncs without corruption upon reconnection.
-- **What NOT to build:** Complex SMS fallback mechanisms (unless explicitly scoped later).
-- **Status:** Planned (Currently only a visual demo exists).
+- **Dependencies:** Phase 2, 4.
+- **Acceptance Criteria:** A field worker can create an assessment completely disconnected, and it reliably syncs once reconnected.
+- **What NOT to build:** Complex conflict resolution right away. Last-write-wins is acceptable for MVP.
+- **Status:** Partially Implemented (Phase 6 Tasks 1, 2, and 3 implemented).
+
+### Phase 6 Implementation Details
+**IMPLEMENTED:**
+- Shared offline/sync contracts in `@swasthyasetu/types` (`NetworkStatus`, `SyncStatus`, `OfflineRecord`, `SyncOperation`, etc.).
+- Web IndexedDB foundation (`apps/web/src/lib/offline/db.ts`).
+- Browser network detection utility and React hook (`apps/web/src/lib/offline/network.ts`).
+- Worker SQLite architecture interface documented (`apps/worker/src/lib/offline/sqlite-architecture.md`).
+- offline assessment capture
+- IndexedDB persistence
+- pending sync operation creation
+- local restoration
+- sync queue processing
+- Assessment CREATE synchronization
+- controlled online/manual sync trigger
+- sequential deterministic processing
+- retry handling
+- sync status lifecycle
+- failure recording
+
+**NOT IMPLEMENTED:**
+- conflict resolution
+- advanced conflict detection
+- server-side idempotency
+- background sync API/service worker
+- SMS fallback
+- full mobile SQLite sync
+- advanced retry/backoff system
 
 ## Phase 7 — Interoperability & Security
 - **Objective:** Integrate with national healthcare infrastructure (ABDM).

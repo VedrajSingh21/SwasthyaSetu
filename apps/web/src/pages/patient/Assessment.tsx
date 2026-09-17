@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, Upload, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Upload, CheckCircle2, AlertCircle, Sparkles, WifiOff } from 'lucide-react';
 import { mockCareBundles } from '../../lib/mockData';
-import type { CareRequirement } from '@swasthyasetu/types';
+import type { CareRequirement, OfflineRecord } from '@swasthyasetu/types';
+import { useNetworkStatus } from '../../lib/offline/network';
+import { offlineDb } from '../../lib/offline/db';
 
 const steps = [
   { id: 'problem', title: 'What problem are you experiencing?', type: 'text', placeholder: 'e.g., Chest pain, difficulty breathing...' },
@@ -97,8 +99,26 @@ export default function Assessment() {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAiResult, setShowAiResult] = useState(false);
+  const [offlineSaved, setOfflineSaved] = useState(false);
   const [aiResult, setAiResult] = useState<ExtractionResult | null>(null);
+  
+  const [savedAssessments, setSavedAssessments] = useState<OfflineRecord<Record<string, string>>[]>([]);
+  
+  const networkStatus = useNetworkStatus();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    loadSavedAssessments();
+  }, []);
+
+  const loadSavedAssessments = async () => {
+    try {
+      const records = await offlineDb.getRecordsByType('Assessment');
+      setSavedAssessments(records.filter(r => r.syncStatus === 'PENDING'));
+    } catch (err) {
+      console.error('Failed to load offline assessments', err);
+    }
+  };
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -117,19 +137,56 @@ export default function Assessment() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Extract requirements from form data
+    if (networkStatus === 'OFFLINE') {
+      const recordId = `assessment_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      try {
+        await offlineDb.storeRecord({
+          id: recordId,
+          entityType: 'Assessment',
+          payload: formData,
+          lastModifiedLocallyAt: new Date().toISOString(),
+          syncStatus: 'PENDING'
+        });
+        
+        await offlineDb.enqueueOperation({
+          operationId: `op_${Date.now()}`,
+          entityType: 'Assessment',
+          entityId: recordId,
+          operationType: 'CREATE',
+          payload: formData,
+          createdAt: new Date().toISOString(),
+          retryCount: 0,
+          syncStatus: 'PENDING'
+        });
+        
+        setOfflineSaved(true);
+        loadSavedAssessments(); // Refresh list
+      } catch (err) {
+        console.error('Failed to save offline', err);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // ONLINE Flow
     const result = extractCareRequirements(formData);
     setAiResult(result);
 
-    // Update global mock data so the CarePlan page renders it correctly
     mockCareBundles[0].title = result.title;
     mockCareBundles[0].priority = result.priority;
     mockCareBundles[0].requirements = result.requirements;
 
-    // Simulate AI processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
     setIsSubmitting(false);
     setShowAiResult(true);
+  };
+
+  const restoreAssessment = (payload: Record<string, string>) => {
+    setFormData(payload);
+    setCurrentStep(0);
+    setShowAiResult(false);
+    setOfflineSaved(false);
   };
 
   const currentStepData = steps[currentStep];
@@ -138,7 +195,35 @@ export default function Assessment() {
     <div className="max-w-2xl mx-auto py-8 px-4">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Patient Assessment</h1>
-        <p className="text-slate-500 text-sm">Help us understand your needs so we can orchestrate your care.</p>
+        <p className="text-slate-500 text-sm mb-4">Help us understand your needs so we can orchestrate your care.</p>
+        
+        {networkStatus === 'OFFLINE' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center gap-2 text-amber-800 text-sm font-medium">
+            <WifiOff className="w-4 h-4" /> You are currently offline. Assessments will be saved locally.
+          </div>
+        )}
+
+        {savedAssessments.length > 0 && currentStep === 0 && !showAiResult && !offlineSaved && (
+          <div className="bg-teal-50 border border-teal-100 rounded-lg p-4 mb-6">
+            <h3 className="text-teal-800 font-semibold mb-2 text-sm">Saved Offline Assessments</h3>
+            <div className="space-y-2">
+              {savedAssessments.map(record => (
+                <div key={record.id} className="flex items-center justify-between bg-white p-3 rounded shadow-sm border border-teal-50">
+                  <div>
+                    <span className="block text-sm font-medium text-slate-700">Assessment from {new Date(record.lastModifiedLocallyAt).toLocaleString()}</span>
+                    <span className="block text-xs text-slate-500">Status: {record.syncStatus}</span>
+                  </div>
+                  <button 
+                    onClick={() => restoreAssessment(record.payload)}
+                    className="px-3 py-1.5 text-xs font-semibold bg-teal-100 text-teal-700 rounded hover:bg-teal-200 transition-colors"
+                  >
+                    Resume
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         {/* Progress bar */}
         {!showAiResult && (
@@ -169,10 +254,35 @@ export default function Assessment() {
                 className="flex flex-col items-center justify-center h-full pt-12"
               >
                 <div className="w-12 h-12 rounded-full border-4 border-teal-100 border-t-teal-500 animate-spin mb-4"></div>
-                <h3 className="text-lg font-bold text-slate-800">Understanding the information provided...</h3>
+                <h3 className="text-lg font-bold text-slate-800">
+                  {networkStatus === 'OFFLINE' ? 'Saving assessment to device...' : 'Understanding the information provided...'}
+                </h3>
                 <p className="text-slate-500 text-sm mt-2 text-center max-w-xs">
-                  Our system is analyzing your assessment to determine the best care requirements for you.
+                  {networkStatus === 'OFFLINE' 
+                    ? 'Preparing to store your information locally.'
+                    : 'Our system is analyzing your assessment to determine the best care requirements for you.'}
                 </p>
+              </motion.div>
+            ) : offlineSaved ? (
+              <motion.div 
+                key="offlineSaved"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="h-full flex flex-col items-center justify-center text-center pt-8"
+              >
+                <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 mb-6 mx-auto">
+                  <WifiOff className="w-8 h-8" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-800 mb-3">Assessment saved on this device.</h2>
+                <p className="text-slate-500 text-base max-w-md mx-auto mb-8">
+                  It is waiting to be submitted when connectivity is restored. Your information is safe and will not be lost.
+                </p>
+                <button 
+                  onClick={() => navigate('/')}
+                  className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold shadow-sm transition-colors"
+                >
+                  Return to Dashboard
+                </button>
               </motion.div>
             ) : showAiResult ? (
               <motion.div 
@@ -301,7 +411,7 @@ export default function Assessment() {
           </AnimatePresence>
         </div>
         
-        {!isSubmitting && !showAiResult && (
+        {!isSubmitting && !showAiResult && !offlineSaved && (
           <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between mt-auto">
             <button 
               onClick={handleBack}
@@ -320,7 +430,7 @@ export default function Assessment() {
           </div>
         )}
 
-        {!isSubmitting && showAiResult && (
+        {!isSubmitting && showAiResult && !offlineSaved && (
           <div className="p-4 sm:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-end mt-auto">
              <button 
               onClick={() => navigate('/patient/care-plan')}
