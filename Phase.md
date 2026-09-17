@@ -58,7 +58,7 @@
 - **Dependencies:** Phase 2.
 - **Acceptance Criteria:** System accurately identifies required specialists and tests from free-text descriptions. Must include human-in-the-loop review.
 - **What NOT to build:** A conversational AI chatbot.
-- **Status:** Planned.
+- **Status:** Complete (Phase 5 Tasks 1, 2, 3, and 4 — AI Integration Foundation, Real LLM Provider, AI -> Care Bundle, and AI Evaluation/Guardrails implemented).
 
 ## Phase 6 — Offline/Low Connectivity
 - **Objective:** Implement true offline-first capabilities for field workers.
