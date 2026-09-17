@@ -6,6 +6,7 @@ import { mockCareBundles } from '../../lib/mockData';
 import type { CareRequirement, OfflineRecord } from '@swasthyasetu/types';
 import { useNetworkStatus } from '../../lib/offline/network';
 import { offlineDb } from '../../lib/offline/db';
+import { syncService } from '../../lib/offline/sync';
 
 const steps = [
   { id: 'problem', title: 'What problem are you experiencing?', type: 'text', placeholder: 'e.g., Chest pain, difficulty breathing...' },
@@ -114,7 +115,7 @@ export default function Assessment() {
   const loadSavedAssessments = async () => {
     try {
       const records = await offlineDb.getRecordsByType('Assessment');
-      setSavedAssessments(records.filter(r => r.syncStatus === 'PENDING'));
+      setSavedAssessments(records.filter(r => r.syncStatus === 'PENDING' || r.syncStatus === 'CONFLICT'));
     } catch (err) {
       console.error('Failed to load offline assessments', err);
     }
@@ -189,6 +190,29 @@ export default function Assessment() {
     setOfflineSaved(false);
   };
 
+  const handleResolveConflict = async (recordId: string, resolution: 'DISCARD' | 'RETRY') => {
+    try {
+      const ops = await offlineDb.getOperationsByStatus('CONFLICT');
+      const op = ops.find(o => o.entityId === recordId);
+      if (op) {
+        await syncService.resolveConflict(op.operationId, resolution);
+        if (resolution === 'RETRY' && networkStatus === 'ONLINE') {
+          syncService.syncPendingOperations().then(() => loadSavedAssessments());
+        }
+      } else {
+        // If operation not found, just mark record as resolved locally
+        const record = await offlineDb.getRecord(recordId);
+        if (record) {
+          record.syncStatus = resolution === 'DISCARD' ? 'FAILED' : 'PENDING';
+          await offlineDb.storeRecord(record);
+        }
+      }
+      loadSavedAssessments();
+    } catch (err) {
+      console.error('Failed to resolve conflict', err);
+    }
+  };
+
   const currentStepData = steps[currentStep];
 
   return (
@@ -206,19 +230,49 @@ export default function Assessment() {
         {savedAssessments.length > 0 && currentStep === 0 && !showAiResult && !offlineSaved && (
           <div className="bg-teal-50 border border-teal-100 rounded-lg p-4 mb-6">
             <h3 className="text-teal-800 font-semibold mb-2 text-sm">Saved Offline Assessments</h3>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {savedAssessments.map(record => (
-                <div key={record.id} className="flex items-center justify-between bg-white p-3 rounded shadow-sm border border-teal-50">
-                  <div>
+                <div key={record.id} className={`flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 rounded shadow-sm border ${record.syncStatus === 'CONFLICT' ? 'border-rose-200' : 'border-teal-50'}`}>
+                  <div className="mb-2 sm:mb-0">
                     <span className="block text-sm font-medium text-slate-700">Assessment from {new Date(record.lastModifiedLocallyAt).toLocaleString()}</span>
-                    <span className="block text-xs text-slate-500">Status: {record.syncStatus}</span>
+                    
+                    {record.syncStatus === 'CONFLICT' ? (
+                      <div className="mt-1 flex flex-col gap-1">
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100 w-fit">
+                          <AlertCircle className="w-3 h-3" /> Sync Conflict
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          This saved assessment could not be synchronized.
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="block text-xs text-slate-500">Status: {record.syncStatus}</span>
+                    )}
                   </div>
-                  <button 
-                    onClick={() => restoreAssessment(record.payload)}
-                    className="px-3 py-1.5 text-xs font-semibold bg-teal-100 text-teal-700 rounded hover:bg-teal-200 transition-colors"
-                  >
-                    Resume
-                  </button>
+                  
+                  {record.syncStatus === 'CONFLICT' ? (
+                    <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                      <button 
+                        onClick={() => handleResolveConflict(record.id, 'RETRY')}
+                        className="px-3 py-1.5 text-xs font-semibold bg-rose-100 text-rose-700 rounded hover:bg-rose-200 transition-colors"
+                      >
+                        Retry
+                      </button>
+                      <button 
+                        onClick={() => handleResolveConflict(record.id, 'DISCARD')}
+                        className="px-3 py-1.5 text-xs font-semibold bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition-colors"
+                      >
+                        Discard
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => restoreAssessment(record.payload)}
+                      className="px-3 py-1.5 text-xs font-semibold bg-teal-100 text-teal-700 rounded hover:bg-teal-200 transition-colors self-start sm:self-auto"
+                    >
+                      Resume
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

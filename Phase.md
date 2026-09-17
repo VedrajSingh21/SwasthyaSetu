@@ -65,7 +65,7 @@
 - **Dependencies:** Phase 2, 4.
 - **Acceptance Criteria:** A field worker can create an assessment completely disconnected, and it reliably syncs once reconnected.
 - **What NOT to build:** Complex conflict resolution right away. Last-write-wins is acceptable for MVP.
-- **Status:** Partially Implemented (Phase 6 Tasks 1, 2, and 3 implemented).
+- **Status:** Partially Implemented (Phase 6 Tasks 1, 2, 3, and 4 implemented).
 
 ### Phase 6 Implementation Details
 **IMPLEMENTED:**
@@ -73,22 +73,26 @@
 - Web IndexedDB foundation (`apps/web/src/lib/offline/db.ts`).
 - Browser network detection utility and React hook (`apps/web/src/lib/offline/network.ts`).
 - Worker SQLite architecture interface documented (`apps/worker/src/lib/offline/sqlite-architecture.md`).
-- offline assessment capture
-- IndexedDB persistence
-- pending sync operation creation
-- local restoration
-- sync queue processing
-- Assessment CREATE synchronization
-- controlled online/manual sync trigger
-- sequential deterministic processing
-- retry handling
-- sync status lifecycle
-- failure recording
+- **Task 1: Offline Architecture Foundation**
+  - Implemented `Dexie` wrapper for `indexedDB`.
+  - Added sync queue table (`sync_queue`) and offline records table (`offline_records`).
+  - Created global network observer hook (`useNetworkStatus`).
+- **Task 2: Offline Assessment Capture**
+  - Updated Assessment flow to store locally when offline.
+  - Preserved full UI flow without backend dependency.
+  - Added queue entry creation.
+- **Task 3: Basic Sync Engine**
+  - Created deterministic sync service for sequential operation processing.
+  - Implemented retry logic (max 3 retries, distinguishing fatal vs retryable errors).
+  - Added sync trigger on network restore in `PatientLayout`.
+- **Task 4: Evaluation & Conflict Resolution**
+  - Verified conflict state in offline sync layer (intercepts `409 Conflict`).
+  - Implemented `CONFLICT` status in `SyncStatus`.
+  - Preserves original payload and conflict reason safely without automatic retries.
+  - Added `[Retry]` and `[Discard]` resolution UI for conflicts in offline assessments list.
+  - Maintained backend boundaries: No actual clinical logic or database conflict rules were modified.
 
 **NOT IMPLEMENTED:**
-- conflict resolution
-- advanced conflict detection
-- server-side idempotency
 - background sync API/service worker
 - SMS fallback
 - full mobile SQLite sync

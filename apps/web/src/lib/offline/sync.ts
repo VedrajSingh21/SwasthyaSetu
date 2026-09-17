@@ -79,6 +79,10 @@ class SyncService {
           record.syncStatus = 'SYNCED';
           await offlineDb.storeRecord(record);
         }
+      } else if (response.status === 409) {
+        // Conflict lifecycle
+        const errorText = await response.text();
+        await this.handleConflict(operation, `Server conflict 409: ${errorText}`);
       } else {
         const isServerFailure = response.status >= 500;
         const errorText = await response.text();
@@ -93,6 +97,53 @@ class SyncService {
     } catch (error: any) {
       // Network/Temporary failure
       await this.handleRetryableFailure(operation, `Network or temporary error: ${error.message}`);
+    }
+  }
+
+  private async handleConflict(operation: SyncOperation, reason: string): Promise<void> {
+    console.warn(`Conflict for operation ${operation.operationId}:`, reason);
+    operation.syncStatus = 'CONFLICT';
+    operation.conflictStatus = 'UNRESOLVED';
+    operation.errorMessage = reason;
+    await offlineDb.enqueueOperation(operation);
+
+    const record = await offlineDb.getRecord(operation.entityId);
+    if (record) {
+      record.syncStatus = 'CONFLICT';
+      await offlineDb.storeRecord(record);
+    }
+  }
+
+  async resolveConflict(operationId: string, resolution: 'DISCARD' | 'RETRY'): Promise<void> {
+    const ops = await offlineDb.getOperationsByStatus('CONFLICT');
+    const operation = ops.find(o => o.operationId === operationId);
+    
+    if (!operation) {
+      console.warn(`Cannot resolve conflict: Operation ${operationId} not found or not in CONFLICT state.`);
+      return;
+    }
+
+    if (resolution === 'DISCARD') {
+      operation.syncStatus = 'FAILED'; 
+      operation.conflictStatus = 'RESOLVED_CLIENT';
+      await offlineDb.enqueueOperation(operation);
+
+      const record = await offlineDb.getRecord(operation.entityId);
+      if (record) {
+        record.syncStatus = 'FAILED';
+        await offlineDb.storeRecord(record);
+      }
+    } else if (resolution === 'RETRY') {
+      operation.syncStatus = 'PENDING';
+      operation.conflictStatus = 'RESOLVED_CLIENT';
+      operation.retryCount = 0; 
+      await offlineDb.enqueueOperation(operation);
+
+      const record = await offlineDb.getRecord(operation.entityId);
+      if (record) {
+        record.syncStatus = 'PENDING';
+        await offlineDb.storeRecord(record);
+      }
     }
   }
 
