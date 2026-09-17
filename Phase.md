@@ -106,7 +106,7 @@
 - **Dependencies:** Phase 2.
 - **Acceptance Criteria:** Patients can link their ABHA ID to their SwasthyaSetu profile.
 - **What NOT to build:** Full EMR functionality.
-- **Status:** Phase 7 Task 1 — COMPLETE.
+- **Status:** Complete (Phase 7 Task 1, 2, and 3 implemented).
 
 ### Phase 7 Implementation Details
 **IMPLEMENTED:**
@@ -124,6 +124,12 @@
   - Enforced SwasthyaSetu internal namespace for facility IDs, explicitly noting it is not a production HFR ID.
   - Accurately preserved operational facility type (mapped to `prov`), address, latitude, and longitude fields using appropriate FHIR structures and extensions.
   - Explicitly kept ABHA ID linking out of scope to avoid schema pollution or fake government identifiers.
+- **Task 3: HPR Practitioner Mapping**
+  - Implemented GET `/interoperability/practitioners/:id` using `ParseUUIDPipe`.
+  - Mapped internal user schema to a FHIR-inspired `Practitioner` resource.
+  - Enforced SwasthyaSetu internal namespace for practitioner IDs, explicitly noting it is not a production HPR ID.
+  - Accurately preserved practitioner professional roles and metadata using appropriate FHIR structures.
+  - Explicitly kept national registry verification out of scope to avoid schema pollution or fake government identifiers.
 
 **LIMITATIONS & CONSTRAINTS:**
 - This is a FHIR-inspired interoperability prototype, not a production FHIR server or ABDM integration.

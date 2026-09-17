@@ -48,4 +48,19 @@ export class InteroperabilityController {
     }
     return InteroperabilityMapper.mapToOrganizationResource(facility);
   }
+
+  @Get('practitioners/:id')
+  async getPractitioner(@Param('id', ParseUUIDPipe) id: string) {
+    const [user] = await this.db.select().from(schema.users).where(eq(schema.users.id, id));
+    if (!user) {
+      throw new NotFoundException('Practitioner not found');
+    }
+    
+    // Explicitly reject PATIENT role as they are not practitioners
+    if (user.role === 'PATIENT') {
+      throw new NotFoundException('Practitioner not found');
+    }
+
+    return InteroperabilityMapper.mapToPractitionerResource(user);
+  }
 }

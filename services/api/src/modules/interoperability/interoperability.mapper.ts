@@ -167,4 +167,62 @@ export class InteroperabilityMapper {
       ] : undefined
     };
   }
+
+  static mapToPractitionerResource(user: any) {
+    const SYSTEM_PRACTITIONER_URL = 'https://swasthyasetu.example/identifiers/internal-practitioner';
+    
+    const telecom = [];
+    if (user.phone) {
+      telecom.push({ system: 'phone', value: user.phone });
+    }
+    if (user.email) {
+      telecom.push({ system: 'email', value: user.email });
+    }
+
+    // Convert internal role to a simple generic coding
+    const roleMapping: Record<string, string> = {
+      'WORKER': 'worker',
+      'FACILITY': 'facility-staff',
+      'ADMIN': 'admin'
+    };
+    const mappedRole = roleMapping[user.role] || user.role.toLowerCase();
+
+    return {
+      resourceType: 'Practitioner',
+      id: user.id,
+      meta: {
+        source: 'SwasthyaSetu',
+        version: this.VERSION,
+        generatedAt: new Date().toISOString(),
+      },
+      identifier: [
+        {
+          system: SYSTEM_PRACTITIONER_URL,
+          value: user.id,
+          description: 'This identifier is an internal SwasthyaSetu practitioner identifier and is not a Health Professional Registry (HPR) identifier.',
+        }
+      ],
+      active: true,
+      name: [
+        {
+          text: user.name,
+        }
+      ],
+      telecom: telecom.length > 0 ? telecom : undefined,
+      qualification: [
+        {
+          code: {
+            coding: [
+              {
+                system: 'https://swasthyasetu.example/codes/internal-roles',
+                code: mappedRole,
+                display: user.role
+              }
+            ],
+            text: user.role
+          }
+        }
+      ]
+    };
+  }
 }
