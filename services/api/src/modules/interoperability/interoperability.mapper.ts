@@ -101,4 +101,70 @@ export class InteroperabilityMapper {
       ]
     };
   }
+
+  static mapToOrganizationResource(facility: any) {
+    const SYSTEM_FACILITY_URL = 'https://swasthyasetu.example/identifiers/internal-facility';
+    
+    // Map internal facility types to something closer to standard healthcare codes, or keep as is.
+    const facilityTypeMap: Record<string, string> = {
+      'PHC': 'prov', // Healthcare Provider
+      'CHC': 'prov',
+      'DH': 'prov',
+      'SC': 'prov' // Sub-center
+    };
+
+    const typeCode = facilityTypeMap[facility.type] || 'prov';
+
+    return {
+      resourceType: 'Organization',
+      id: facility.id,
+      meta: {
+        source: 'SwasthyaSetu',
+        version: this.VERSION,
+        generatedAt: new Date().toISOString(),
+      },
+      identifier: [
+        {
+          system: SYSTEM_FACILITY_URL,
+          value: facility.id,
+          description: 'This identifier is an internal SwasthyaSetu facility identifier and is not a Health Facility Registry (HFR) identifier.',
+        }
+      ],
+      active: facility.active !== undefined ? facility.active : true,
+      type: [
+        {
+          coding: [
+            {
+              system: 'http://terminology.hl7.org/CodeSystem/organization-type',
+              code: typeCode,
+              display: facility.type,
+            }
+          ],
+          text: facility.type
+        }
+      ],
+      name: facility.name,
+      address: facility.address ? [
+        {
+          text: facility.address,
+          type: 'physical'
+        }
+      ] : undefined,
+      extension: (facility.latitude !== null && facility.longitude !== null && facility.latitude !== undefined && facility.longitude !== undefined) ? [
+        {
+          url: 'http://hl7.org/fhir/StructureDefinition/geolocation',
+          extension: [
+            {
+              url: 'latitude',
+              valueDecimal: facility.latitude
+            },
+            {
+              url: 'longitude',
+              valueDecimal: facility.longitude
+            }
+          ]
+        }
+      ] : undefined
+    };
+  }
 }

@@ -39,4 +39,13 @@ export class InteroperabilityController {
     }
     return InteroperabilityMapper.mapToServiceRequestResource(referral);
   }
+
+  @Get('facilities/:id')
+  async getFacility(@Param('id', ParseUUIDPipe) id: string) {
+    const [facility] = await this.db.select().from(schema.facilities).where(eq(schema.facilities.id, id));
+    if (!facility) {
+      throw new NotFoundException('Facility not found');
+    }
+    return InteroperabilityMapper.mapToOrganizationResource(facility);
+  }
 }

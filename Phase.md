@@ -118,6 +118,12 @@
   - Created a new Interoperability Module/Mapper for FHIR-inspired resources mapping (`Patient`, `CarePlan`, `ServiceRequest`).
   - Added safe internal SwasthyaSetu identifier mapping for Patients.
   - Explicitly avoided true ABDM/ABHA integration in favor of a prototype interoperability layer.
+- **Task 2: HFR Facility Mapping**
+  - Implemented GET `/interoperability/facilities/:id` using `ParseUUIDPipe`.
+  - Mapped internal `facilities` schema to a FHIR-inspired `Organization` resource.
+  - Enforced SwasthyaSetu internal namespace for facility IDs, explicitly noting it is not a production HFR ID.
+  - Accurately preserved operational facility type (mapped to `prov`), address, latitude, and longitude fields using appropriate FHIR structures and extensions.
+  - Explicitly kept ABHA ID linking out of scope to avoid schema pollution or fake government identifiers.
 
 **LIMITATIONS & CONSTRAINTS:**
 - This is a FHIR-inspired interoperability prototype, not a production FHIR server or ABDM integration.
