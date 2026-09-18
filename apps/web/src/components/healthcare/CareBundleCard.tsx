@@ -1,5 +1,6 @@
 import type { CareBundle, CareRequirement } from "@swasthyasetu/types";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface CareBundleCardProps {
   bundle: CareBundle;
@@ -47,8 +48,15 @@ export function CareBundleCard({ bundle, className = "" }: CareBundleCardProps) 
         
         <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
           <div className="text-sm text-slate-600">
-            Estimated visits: <span className="font-semibold text-slate-800">{bundle.estimatedVisits}</span>
+            Estimated visits: <span className="font-semibold text-slate-800">{bundle.estimatedVisits || 1}</span>
           </div>
+          <Link 
+            to="/patient/facilities" 
+            state={{ bundleId: bundle.id }} 
+            className="text-sm font-semibold text-teal-600 hover:text-teal-700 flex items-center"
+          >
+            Find Facilities &rarr;
+          </Link>
         </div>
       </div>
     </div>

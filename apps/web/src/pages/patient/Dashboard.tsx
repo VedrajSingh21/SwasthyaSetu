@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { CareBundleCard } from "../../components/healthcare/CareBundleCard";
 import { CareJourneyVisual } from "../../components/healthcare/CareJourneyVisual";
-import { PatientBurdenCard } from "../../components/healthcare/PatientBurdenCard";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { getPatient, getPatientCareBundles, getPatientJourneys, getPatientReferrals } from '../../lib/api/patient';
 import { config } from '../../lib/api';
 import type { Patient, CareBundle, CareJourney, Referral } from '@swasthyasetu/types';
-import { mockFacilities, mockCareReadiness } from '../../lib/mockData';
 
 export default function PatientDashboard() {
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -79,10 +77,6 @@ export default function PatientDashboard() {
     );
   }
 
-  // Still using mock data for facilities/readiness as instructed (Facility Workflow is later)
-  const recommendedReadiness = mockCareReadiness[1];
-  const recommendedFacility = mockFacilities.find(f => f.id === recommendedReadiness.facilityId)!;
-
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
@@ -128,8 +122,11 @@ export default function PatientDashboard() {
         <div className="space-y-8">
           <div>
             <h3 className="text-xl font-bold text-slate-800 mb-4">Selected Facility</h3>
-            {/* The Facility component still uses mock facilities for now since facility endpoints are Task 6 */}
-            <PatientBurdenCard facility={recommendedFacility} readiness={recommendedReadiness} />
+            <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 text-center text-slate-500">
+              {referrals.length > 0 
+                ? "Your facility assignment is being processed."
+                : "No facility selected yet. Please complete an assessment and find a care-ready facility."}
+            </div>
           </div>
           
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
