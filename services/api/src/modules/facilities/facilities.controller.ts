@@ -14,4 +14,8 @@ export class FacilitiesController {
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.facilitiesService.findOne(id);
   }
+  @Get(':id/referrals')
+  async findReferrals(@Param('id', ParseUUIDPipe) id: string) {
+    return this.facilitiesService.findFacilityReferrals(id);
+  }
 }
