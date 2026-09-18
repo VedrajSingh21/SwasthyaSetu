@@ -8,6 +8,7 @@ import { DynamicRoutingModule } from './modules/dynamic-routing/dynamic-routing.
 import { AiModule } from './modules/ai/ai.module.js';
 import { AssessmentsModule } from './modules/assessments/assessments.module.js';
 import { InteroperabilityModule } from './modules/interoperability/interoperability.module.js';
+import { ReferralsModule } from './modules/referrals/referrals.module.js';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { InteroperabilityModule } from './modules/interoperability/interoperabil
     AiModule,
     AssessmentsModule,
     InteroperabilityModule,
+    ReferralsModule,
   ],
 })
 export class AppModule {}
