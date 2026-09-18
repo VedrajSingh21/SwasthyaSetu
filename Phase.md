@@ -144,7 +144,7 @@ Goal: Connect React frontend to Supabase via NestJS backend.
 
 - [x] **Task 1:** API Client Foundation (Centralized client with robust error handling/timeouts) - ✅ COMPLETE
 - [x] **Task 2:** Patient Dashboard Read-Only Integration (Fetch patient, bundles, referrals, journeys) - ✅ COMPLETE
-- [ ] **Task 3:** Assessment to Care Bundle Flow (Submit assessment to API -> AI processing -> render bundle)
+- [x] **Task 3:** Assessment to Care Bundle Flow (Submit assessment to API -> AI processing -> render bundle) - ✅ COMPLETE
 - [ ] **Task 4:** Care Readiness Selection (Map recommended facilities and select destination)
 - [ ] **Task 5:** Dynamic Routing Integration (Handle referral creation and failover rerouting)
 - [ ] **Task 6:** Facility Dashboard Workflow (Acknowledge inbound referrals, update status)

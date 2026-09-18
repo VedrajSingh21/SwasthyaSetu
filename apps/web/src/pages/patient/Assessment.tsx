@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, Upload, CheckCircle2, AlertCircle, Sparkles, WifiOff } from 'lucide-react';
-import { mockCareBundles } from '../../lib/mockData';
 import type { CareRequirement, OfflineRecord } from '@swasthyasetu/types';
 import { useNetworkStatus } from '../../lib/offline/network';
 import { offlineDb } from '../../lib/offline/db';
 import { syncService } from '../../lib/offline/sync';
+import { processAssessment } from '../../lib/api/assessment';
+import { config } from '../../lib/api';
 
 const steps = [
   { id: 'problem', title: 'What problem are you experiencing?', type: 'text', placeholder: 'e.g., Chest pain, difficulty breathing...' },
@@ -22,77 +23,6 @@ interface ExtractionResult {
   requirements: CareRequirement[];
   priority: "High" | "Medium" | "Low";
   reason: string;
-}
-
-function extractCareRequirements(data: Record<string, string>): ExtractionResult {
-  const combinedText = Object.values(data).join(' ').toLowerCase();
-
-  if (
-    combinedText.includes('chest pain') ||
-    combinedText.includes('chest discomfort') ||
-    combinedText.includes('chest pressure') ||
-    combinedText.includes('breathlessness') ||
-    combinedText.includes('shortness of breath')
-  ) {
-    return {
-      title: "Cardiology Evaluation",
-      priority: "High",
-      reason: "The reported symptoms indicate that specialist assessment and the listed investigations may be required for further evaluation.",
-      requirements: [
-        { id: "cr1", type: "Consultation", name: "Cardiologist Consultation", specialty: "Cardiology" },
-        { id: "cr2", type: "Diagnostic", name: "ECG", specialty: "Cardiology" },
-        { id: "cr3", type: "Diagnostic", name: "Basic blood investigation", specialty: "General" },
-        { id: "cr4", type: "Procedure", name: "Follow-up required", specialty: "General" },
-      ]
-    };
-  }
-
-  if (
-    combinedText.includes('fever') ||
-    combinedText.includes('high temperature') ||
-    combinedText.includes('chills')
-  ) {
-    return {
-      title: "Fever Evaluation",
-      priority: "Medium",
-      reason: "The reported symptoms indicate that a general physician assessment and basic blood investigations may be required.",
-      requirements: [
-        { id: "cr1", type: "Consultation", name: "General physician consultation", specialty: "General" },
-        { id: "cr2", type: "Diagnostic", name: "Basic blood investigation", specialty: "General" },
-        { id: "cr3", type: "Procedure", name: "Follow-up required", specialty: "General" },
-      ]
-    };
-  }
-
-  if (
-    combinedText.includes('broken arm') ||
-    combinedText.includes('arm injury') ||
-    combinedText.includes('leg injury') ||
-    combinedText.includes('fracture') ||
-    combinedText.includes('severe injury')
-  ) {
-    return {
-      title: "Orthopedic Evaluation",
-      priority: "High",
-      reason: "The reported injury indicates that an orthopedic assessment and imaging may be required.",
-      requirements: [
-        { id: "cr1", type: "Consultation", name: "Orthopedic consultation", specialty: "Orthopedics" },
-        { id: "cr2", type: "Diagnostic", name: "X-ray / required imaging", specialty: "Orthopedics" },
-        { id: "cr3", type: "Procedure", name: "Follow-up required", specialty: "General" },
-      ]
-    };
-  }
-
-  return {
-    title: "General Evaluation",
-    priority: "Medium",
-    reason: "The reported symptoms indicate that a clinical assessment may be required.",
-    requirements: [
-      { id: "cr1", type: "Consultation", name: "General physician consultation", specialty: "General" },
-      { id: "cr2", type: "Diagnostic", name: "Clinical assessment", specialty: "General" },
-      { id: "cr3", type: "Procedure", name: "Follow-up required", specialty: "General" },
-    ]
-  };
 }
 
 export default function Assessment() {
@@ -171,16 +101,39 @@ export default function Assessment() {
     }
 
     // ONLINE Flow
-    const result = extractCareRequirements(formData);
-    setAiResult(result);
+    try {
+      if (!config.demoPatientId) {
+        throw new Error("VITE_DEMO_PATIENT_ID is not configured in the environment.");
+      }
 
-    mockCareBundles[0].title = result.title;
-    mockCareBundles[0].priority = result.priority;
-    mockCareBundles[0].requirements = result.requirements;
+      const payload = {
+        patientId: config.demoPatientId,
+        patientReportedSymptoms: `${formData.problem || ''}. ${formData.symptoms || ''}`.trim(),
+        duration: formData.duration,
+        additionalContext: formData.history
+      };
 
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    setShowAiResult(true);
+      const response = await processAssessment(payload);
+      
+      // Map to the existing UI state
+      setAiResult({
+        title: response.careBundle.title,
+        priority: response.careBundle.priority as any,
+        reason: 'Analyzed from patient assessment.',
+        requirements: response.requirements.map(r => ({
+          id: r.id,
+          type: r.requirementType as any,
+          name: r.name,
+          specialty: 'General'
+        }))
+      });
+
+      setShowAiResult(true);
+    } catch (err: any) {
+      alert(err.message || 'An error occurred submitting the assessment.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const restoreAssessment = (payload: Record<string, string>) => {
