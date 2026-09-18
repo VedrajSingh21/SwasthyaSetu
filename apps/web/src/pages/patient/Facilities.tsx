@@ -5,6 +5,8 @@ import { getBundleCareReadiness } from '../../lib/api/careReadiness';
 import type { FacilityReadinessResponse } from '../../lib/api/careReadiness';
 import { CareReadinessCard } from '../../components/healthcare/CareReadinessCard';
 import { PatientBurdenCard } from '../../components/healthcare/PatientBurdenCard';
+import { createReferral } from '../../lib/api/referral';
+import { config, ApiError, NetworkError } from '../../lib/api';
 
 export default function Facilities() {
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ export default function Facilities() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedFacilityId, setSelectedFacilityId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     async function loadFacilities() {
@@ -41,6 +45,37 @@ export default function Facilities() {
     loadFacilities();
   }, [bundleId]);
 
+  const handleCreateReferral = async (facilityId: string) => {
+    if (isCreating || !bundleId) return;
+    
+    try {
+      setIsCreating(true);
+      setError(null);
+      
+      await createReferral({
+        patientId: config.demoPatientId,
+        careBundleId: bundleId,
+        destinationFacilityId: facilityId,
+        reason: 'Patient selected facility via dashboard',
+      });
+      
+      setSuccess(true);
+    } catch (err: any) {
+      if (err instanceof ApiError && err.status === 409) {
+        setError('An active referral already exists for this care request and facility.');
+      } else if (err instanceof ApiError && err.status === 404) {
+        setError('Resource not found. Please ensure the care bundle and facility exist.');
+      } else if (err instanceof NetworkError) {
+        setError('Network unavailable or server unreachable. Please try again.');
+      } else {
+        setError(err.message || 'Failed to create referral. Please try again.');
+      }
+      setSelectedFacilityId(null);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
@@ -57,6 +92,24 @@ export default function Facilities() {
           <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-rose-900 mb-2">Cannot Load Facilities</h2>
           <p className="text-rose-700">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="max-w-4xl mx-auto py-12 px-4 text-center">
+        <div className="bg-teal-50 border border-teal-200 rounded-xl p-8 inline-block max-w-lg">
+          <CheckCircle2 className="w-12 h-12 text-teal-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-teal-900 mb-2">Referral created successfully.</h2>
+          <p className="text-teal-700 mb-6">Your care request has been sent to the selected facility.</p>
+          <button 
+            onClick={() => navigate('/patient/dashboard')}
+            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+          >
+            Return to Dashboard
+          </button>
         </div>
       </div>
     );
@@ -83,22 +136,24 @@ export default function Facilities() {
         </div>
       </div>
       
-      {selectedFacilityId && (
+      {selectedFacilityId && !success && (
         <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 flex items-center justify-between mb-8 shadow-sm">
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-teal-600 shrink-0" />
             <div>
               <h4 className="font-semibold text-teal-800 text-sm">Facility Selected</h4>
               <p className="text-xs text-teal-700 mt-0.5">
-                You have selected {facilities.find(f => f.facilityId === selectedFacilityId)?.facilityName}. (Referral workflow is pending Task 5)
+                You have selected {facilities.find(f => f.facilityId === selectedFacilityId)?.facilityName}.
               </p>
             </div>
           </div>
           <button 
-            onClick={() => navigate('/patient/dashboard')}
-            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded font-medium text-sm transition-colors"
+            onClick={() => handleCreateReferral(selectedFacilityId)}
+            disabled={isCreating}
+            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded font-medium text-sm transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            Return to Dashboard
+            {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isCreating ? 'Creating...' : 'Confirm Referral'}
           </button>
         </div>
       )}
@@ -174,8 +229,8 @@ export default function Facilities() {
                     {isSelectable ? (
                       <button 
                         onClick={() => setSelectedFacilityId(readiness.facilityId)}
-                        disabled={isSelected}
-                        className={`mt-4 w-full font-semibold py-3 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 ${isSelected ? 'bg-indigo-600 text-white cursor-default' : 'bg-slate-900 hover:bg-slate-800 text-white'}`}
+                        disabled={isSelected || isCreating}
+                        className={`mt-4 w-full font-semibold py-3 rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 ${isSelected ? 'bg-indigo-600 text-white cursor-default' : 'bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 cursor-pointer'}`}
                       >
                         {isSelected ? 'Selected' : 'Select'}
                         {!isSelected && <ArrowRight className="w-4 h-4" />}
