@@ -1,47 +1,112 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CareJourneyVisual } from '../../components/healthcare/CareJourneyVisual';
-import { mockCareJourney, mockFacilities, mockCareReadiness } from '../../lib/mockData';
-import { AlertTriangle, RefreshCcw, ArrowRight } from 'lucide-react';
-import type { CareJourney } from '@swasthyasetu/types';
-import { CareReadinessCard } from '../../components/healthcare/CareReadinessCard';
+import { AlertTriangle, RefreshCcw, Loader2, WifiOff } from 'lucide-react';
+import { getPatientJourneys, getPatientReferrals } from '../../lib/api/patient';
+import { dynamicRoutingApi, type ReroutingResponse } from '../../lib/api/dynamicRouting';
+import { config, ApiError, NetworkError } from '../../lib/api';
 
 export default function Journey() {
-  const [journeyState, setJourneyState] = useState<'normal' | 'blocked' | 'recovered'>('normal');
-  const [isSimulating, setIsSimulating] = useState(false);
+  const [journey, setJourney] = useState<any>(null);
+  const [referral, setReferral] = useState<any>(null);
+  const [routingState, setRoutingState] = useState<ReroutingResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  // Facility B
-  const initialFacility = mockFacilities[1]; 
-  
-  // Facility D (alternative)
-  const alternativeFacility = mockFacilities[3];
-  const alternativeReadiness = mockCareReadiness[3];
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
-  const currentJourney: CareJourney = {
-    ...mockCareJourney,
-    steps: mockCareJourney.steps.map(step => {
-      if (journeyState === 'blocked' && step.id === 'diag') {
-        return { ...step, status: 'Blocked', description: 'ECG machine is currently out of service.' };
+  const loadData = useCallback(async () => {
+    if (!config.demoPatientId) {
+      setError('Patient ID not configured');
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [journeys, referrals] = await Promise.all([
+        getPatientJourneys(config.demoPatientId),
+        getPatientReferrals(config.demoPatientId)
+      ]);
+      
+      const activeJourney = journeys[0]; 
+      // Look for a referral that is PENDING, ACCEPTED, or REROUTED
+      const activeReferral = referrals.find((r: any) => !['CANCELLED', 'COMPLETED'].includes(r.status)) || referrals[0];
+      
+      setJourney(activeJourney || null);
+      setReferral(activeReferral || null);
+      
+      const ref = activeReferral as any;
+      if (ref && !['COMPLETED', 'CANCELLED', 'REROUTED', 'BLOCKED'].includes(ref.status)) {
+         if (ref.destinationFacilityId && ref.careBundleId) {
+            const routing = await dynamicRoutingApi.getReroute(
+              ref.careBundleId, 
+              ref.destinationFacilityId
+            );
+            setRoutingState(routing);
+         }
+      } else {
+        setRoutingState(null);
       }
-      if (journeyState === 'recovered') {
-        if (step.id === 'appt') return { ...step, description: 'Confirmed at City General Hospital.' };
-        if (step.id === 'diag') return { ...step, status: 'Pending', description: 'Scheduled at City General Hospital.' };
+    } catch (err: any) {
+      if (err instanceof NetworkError) {
+         setError('Network error. Offline mode enabled.');
+         setIsOffline(true);
+      } else if (err instanceof ApiError) {
+         setError(err.message);
+      } else {
+         setError('Failed to load journey data');
       }
-      return step;
-    })
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleRecover = async () => {
+    if (!referral) return;
+    try {
+      setIsRecovering(true);
+      setError(null);
+      await dynamicRoutingApi.recoverReferral(referral.id);
+      await loadData();
+    } catch (err: any) {
+      if (err instanceof NetworkError) {
+         setError('Live rerouting requires connectivity.');
+         setIsOffline(true);
+      } else if (err instanceof ApiError) {
+         setError(err.message);
+      } else {
+         setError('Recovery failed');
+      }
+    } finally {
+      setIsRecovering(false);
+    }
   };
 
-  const simulateDisruption = async () => {
-    setIsSimulating(true);
-    // 1. Show blocked state
-    setJourneyState('blocked');
-    await new Promise(r => setTimeout(r, 2000));
-    // UI will handle showing the alternative option once blocked.
-    setIsSimulating(false);
-  };
+  if (isLoading && !journey) {
+    return (
+      <div className="max-w-4xl mx-auto flex items-center justify-center h-[calc(100vh-8rem)]">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+      </div>
+    );
+  }
 
-  const handleSwitch = () => {
-    setJourneyState('recovered');
-  };
+  const isBlocked = routingState?.currentFacility?.status === 'NOT_CARE_READY';
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
@@ -50,102 +115,114 @@ export default function Journey() {
           <h1 className="text-3xl font-bold text-slate-900">Your Care Journey</h1>
           <p className="text-slate-500 mt-2">Track your progress and upcoming appointments.</p>
         </div>
-        
-        {/* DEMO CONTROLS */}
-        {journeyState === 'normal' && (
-          <button 
-            onClick={simulateDisruption}
-            disabled={isSimulating}
-            className="flex items-center px-4 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
-          >
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Simulate Care Disruption
-          </button>
-        )}
-        {journeyState === 'recovered' && (
-          <button 
-            onClick={() => setJourneyState('normal')}
-            className="flex items-center px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-bold transition-colors"
-          >
-            <RefreshCcw className="w-4 h-4 mr-2" />
-            Reset Demo
-          </button>
-        )}
+        <button 
+          onClick={loadData}
+          disabled={isLoading}
+          className="flex items-center px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
+        >
+          <RefreshCcw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-rose-50 text-rose-700 text-sm rounded-lg flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4" /> {error}
+        </div>
+      )}
+
+      {isOffline && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center gap-2">
+          <WifiOff className="w-4 h-4" /> 
+          <div>
+             <strong>Offline Mode:</strong> Viewing locally available journey information. Live rerouting and updates require connectivity.
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          {journeyState === 'blocked' && (
+          {isBlocked && (
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
               <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-rose-800">Care Journey Blocked</h4>
                 <p className="text-sm text-rose-700 mt-1">
-                  Your selected facility ({initialFacility.name}) can no longer complete the full care bundle.
-                  The ECG machine is currently unavailable.
+                  Your current facility ({routingState.currentFacility.facilityName}) can no longer complete the required care bundle.
                 </p>
-                <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-rose-700 bg-rose-100 px-3 py-1.5 rounded-lg">
-                  <div className="w-4 h-4 rounded-full border-2 border-rose-200 border-t-rose-600 animate-spin"></div>
-                  Finding another care-ready option...
+                <div className="mt-3 space-y-1">
+                  {routingState.currentFacility.blockingReasons?.map((reason, idx) => (
+                    <div key={idx} className="text-sm font-medium text-rose-800 bg-rose-100/50 px-2 py-1 rounded">
+                      • {reason.message}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
-          <CareJourneyVisual journey={currentJourney} />
+          {journey ? (
+            <CareJourneyVisual journey={journey} />
+          ) : (
+            <div className="text-center p-12 bg-white rounded-xl border border-slate-200">
+              <p className="text-slate-500">No active journey found.</p>
+            </div>
+          )}
         </div>
 
         <div>
-          {journeyState === 'normal' && (
+          {routingState && !isBlocked && routingState.routingStatus === 'CURRENT_ROUTE_STILL_VALID' && (
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
               <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Current Facility</div>
-              <h3 className="font-bold text-slate-800">{initialFacility.name}</h3>
-              <p className="text-sm text-slate-600 mt-1">All services available.</p>
+              <h3 className="font-bold text-slate-800">{routingState.currentFacility.facilityName}</h3>
+              <p className="text-sm text-emerald-600 font-medium mt-1">✓ CARE READY</p>
             </div>
           )}
 
-          {journeyState === 'blocked' && (
+          {routingState && isBlocked && routingState.routingStatus === 'NO_ALTERNATIVE_AVAILABLE' && (
+            <div className="bg-white border border-rose-200 rounded-xl p-5 shadow-sm">
+               <div className="text-sm font-semibold text-rose-500 uppercase tracking-wider mb-2">No Alternative Available</div>
+               <p className="text-sm text-slate-600">
+                  The system is currently unable to find a CARE READY facility for your required bundle. 
+                  Please check back later or contact support.
+               </p>
+            </div>
+          )}
+
+          {routingState && isBlocked && routingState.alternative && (
             <div className="bg-white border-2 border-teal-500 rounded-xl p-5 shadow-md animate-in fade-in slide-in-from-right-4">
               <div className="inline-flex items-center gap-1 text-xs font-bold text-teal-700 bg-teal-50 px-2 py-1 rounded mb-3 uppercase tracking-wider">
                 <RefreshCcw className="w-3 h-3" /> Alternative Found
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">{alternativeFacility.name}</h3>
-              <p className="text-sm text-slate-500 mb-4">{alternativeFacility.distance} km away</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-1">{routingState.alternative.facilityName}</h3>
               
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 font-medium">Specialist</span>
-                  <span className="text-teal-600 font-bold">Available</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 font-medium">ECG</span>
-                  <span className="text-teal-600 font-bold">Available</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 font-medium">Appointments</span>
-                  <span className="text-teal-600 font-bold">Available</span>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <CareReadinessCard readiness={alternativeReadiness} hideFacilityName />
+              <div className="mt-3 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                 <p className="text-sm text-slate-600">
+                    The current facility cannot fulfil the care requirement. 
+                    This alternative is fully evaluated and <span className="font-bold text-teal-600">CARE READY</span>.
+                 </p>
+                 <div className="mt-2 text-xs font-bold text-slate-500 uppercase">Readiness Score: {routingState.alternative.readinessScore}%</div>
               </div>
 
               <button 
-                onClick={handleSwitch}
-                className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2"
+                onClick={handleRecover}
+                disabled={isRecovering || isOffline}
+                className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Switch to {alternativeFacility.name}
-                <ArrowRight className="w-4 h-4" />
+                {isRecovering ? (
+                   <><Loader2 className="w-4 h-4 animate-spin" /> Rerouting...</>
+                ) : (
+                   <><RefreshCcw className="w-4 h-4" /> Reroute Care</>
+                )}
               </button>
             </div>
           )}
 
-          {journeyState === 'recovered' && (
+          {!routingState && referral?.status === 'REROUTED' && (
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm animate-in fade-in">
-              <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Updated Facility</div>
-              <h3 className="font-bold text-slate-800">{alternativeFacility.name}</h3>
-              <p className="text-sm text-teal-600 font-medium mt-1">Successfully rerouted.</p>
+              <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Updated Destination</div>
+              <div className="text-sm text-teal-600 font-medium mb-1">✓ Successfully rerouted.</div>
+              <p className="text-sm text-slate-500">Your referral is active at the new facility.</p>
             </div>
           )}
         </div>
