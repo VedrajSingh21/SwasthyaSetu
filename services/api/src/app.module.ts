@@ -9,6 +9,7 @@ import { AiModule } from './modules/ai/ai.module.js';
 import { AssessmentsModule } from './modules/assessments/assessments.module.js';
 import { InteroperabilityModule } from './modules/interoperability/interoperability.module.js';
 import { ReferralsModule } from './modules/referrals/referrals.module.js';
+import { JourneysModule } from './modules/journeys/journeys.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ReferralsModule } from './modules/referrals/referrals.module.js';
     AssessmentsModule,
     InteroperabilityModule,
     ReferralsModule,
+    JourneysModule,
   ],
 })
 export class AppModule {}
