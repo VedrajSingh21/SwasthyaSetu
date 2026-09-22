@@ -17,8 +17,8 @@ export interface Facility {
 
 export interface CareRequirement {
   id: string;
-  type?: "Consultation" | "Diagnostic" | "Procedure";
-  requirementType?: "Consultation" | "Diagnostic" | "Procedure";
+  type?: "Consultation" | "Diagnostic" | "Procedure" | "Follow-up";
+  requirementType?: "Consultation" | "Diagnostic" | "Procedure" | "Follow-up";
   name: string;
   specialty?: string;
   status?: string;

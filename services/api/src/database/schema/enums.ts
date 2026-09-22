@@ -8,5 +8,5 @@ export const requirementStatusEnum = pgEnum('requirement_status', ['REQUIRED', '
 export const bottleneckStatusEnum = pgEnum('bottleneck_status', ['DETECTED', 'RESOLVED', 'IGNORED']);
 export const careJourneyStageEnum = pgEnum('care_journey_stage', ['ASSESSMENT', 'REFERRAL', 'APPOINTMENT', 'ARRIVED', 'CONSULTATION', 'DIAGNOSTICS', 'TREATMENT', 'FOLLOW_UP']);
 export const careBundleSourceEnum = pgEnum('care_bundle_source', ['RULE_ENGINE', 'LLM', 'CLINICIAN', 'MANUAL']);
-export const requirementTypeEnum = pgEnum('requirement_type', ['Consultation', 'Diagnostic', 'Procedure']);
+export const requirementTypeEnum = pgEnum('requirement_type', ['Consultation', 'Diagnostic', 'Procedure', 'Follow-up']);
 export const priorityEnum = pgEnum('priority', ['High', 'Medium', 'Low']);
