@@ -13,8 +13,14 @@ export class JourneysController {
   @Post(':id/advance')
   async advanceJourney(
     @Param('id') id: string,
-    @Body() body: { requestedStage: string; actorId?: string; notes?: string }
+    @Body() body: { requestedStage: string; actorId?: string; notes?: string; completedRequirementId?: string }
   ) {
-    return this.journeysService.advanceJourney(id, body.requestedStage, body.actorId, body.notes);
+    const updated = await this.journeysService.advanceJourney(id, body.requestedStage, body.actorId, body.notes);
+    
+    if (body.completedRequirementId) {
+      await this.journeysService.markRequirementCompleted(body.completedRequirementId);
+    }
+    
+    return this.journeysService.getJourney(id);
   }
 }

@@ -4,10 +4,11 @@ import { AlertTriangle, RefreshCcw, Loader2, WifiOff } from 'lucide-react';
 import { getPatientJourneys, getPatientReferrals } from '../../lib/api/patient';
 import { dynamicRoutingApi, type ReroutingResponse } from '../../lib/api/dynamicRouting';
 import { config, ApiError, NetworkError } from '../../lib/api';
+import type { CareJourney, Referral } from '@swasthyasetu/types';
 
 export default function Journey() {
-  const [journey, setJourney] = useState<any>(null);
-  const [referral, setReferral] = useState<any>(null);
+  const [journey, setJourney] = useState<CareJourney | null>(null);
+  const [referral, setReferral] = useState<Referral | null>(null);
   const [routingState, setRoutingState] = useState<ReroutingResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRecovering, setIsRecovering] = useState(false);
@@ -42,24 +43,24 @@ export default function Journey() {
       
       const activeJourney = journeys[0]; 
       // Look for a referral that is PENDING, ACCEPTED, or REROUTED
-      const activeReferral = referrals.find((r: any) => !['CANCELLED', 'COMPLETED'].includes(r.status)) || referrals[0];
+      const activeReferral = referrals.find((r: Referral) => !['CANCELLED', 'COMPLETED'].includes(r.status)) || referrals[0];
       
       setJourney(activeJourney || null);
       setReferral(activeReferral || null);
       
-      const ref = activeReferral as any;
+      const ref = activeReferral;
       if (ref && !['COMPLETED', 'CANCELLED', 'REROUTED', 'BLOCKED'].includes(ref.status)) {
-         if (ref.destinationFacilityId && ref.careBundleId) {
+         if (ref.targetFacilityId && ref.careBundleId) {
             const routing = await dynamicRoutingApi.getReroute(
               ref.careBundleId, 
-              ref.destinationFacilityId
+              ref.targetFacilityId
             );
             setRoutingState(routing);
          }
       } else {
         setRoutingState(null);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof NetworkError) {
          setError('Network error. Offline mode enabled.');
          setIsOffline(true);
@@ -84,7 +85,7 @@ export default function Journey() {
       setError(null);
       await dynamicRoutingApi.recoverReferral(referral.id);
       await loadData();
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof NetworkError) {
          setError('Live rerouting requires connectivity.');
          setIsOffline(true);

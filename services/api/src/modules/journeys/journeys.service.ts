@@ -7,7 +7,7 @@ import { careRequirements } from '../../database/schema/care.js';
 
 @Injectable()
 export class JourneysService {
-  constructor(@Inject(DATABASE_CONNECTION) private readonly db: PostgresJsDatabase<any>) {}
+  constructor(@Inject(DATABASE_CONNECTION) private readonly db: PostgresJsDatabase<Record<string, unknown>>) {}
 
   // Stages ordered logically to understand sequence
   private readonly STAGE_ORDER = [
@@ -30,11 +30,9 @@ export class JourneysService {
       .where(eq(careJourneyEvents.journeyId, journeyId))
       .orderBy(asc(careJourneyEvents.createdAt));
 
-    let requirements: any[] = [];
-    if (journey.careBundleId) {
-      requirements = await this.db.select().from(careRequirements)
-        .where(eq(careRequirements.careBundleId, journey.careBundleId));
-    }
+    const requirements = journey.careBundleId 
+      ? await this.db.select().from(careRequirements).where(eq(careRequirements.careBundleId, journey.careBundleId))
+      : [];
 
     return {
       ...journey,
@@ -92,16 +90,18 @@ export class JourneysService {
       }
     }
 
+type JourneyStage = 'ASSESSMENT' | 'REFERRAL' | 'APPOINTMENT' | 'ARRIVED' | 'CONSULTATION' | 'DIAGNOSTICS' | 'TREATMENT' | 'FOLLOW_UP';
+
     // Proceed with transition
     return this.db.transaction(async (tx) => {
       const [updated] = await tx.update(careJourneys)
-        .set({ currentStage: requestedStage as any, updatedAt: new Date() })
+        .set({ currentStage: requestedStage as JourneyStage, updatedAt: new Date() })
         .where(eq(careJourneys.id, journeyId))
         .returning();
 
       await tx.insert(careJourneyEvents).values({
         journeyId: journeyId,
-        stage: requestedStage as any,
+        stage: requestedStage as JourneyStage,
         eventType: 'STAGE_ADVANCED',
         metadata: {
           previousStage: journey.currentStage,

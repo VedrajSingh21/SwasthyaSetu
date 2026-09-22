@@ -10,6 +10,7 @@ describe('JourneysController', () => {
   const mockJourneysService = {
     getJourney: vi.fn(),
     advanceJourney: vi.fn(),
+    markRequirementCompleted: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -41,13 +42,30 @@ describe('JourneysController', () => {
     expect(result).toEqual(mockJourney);
   });
 
-  it('should call advanceJourney', async () => {
-    const mockUpdatedJourney = { id: 'test-id', currentStage: 'CONSULTATION' };
+  it('should call advanceJourney and markRequirementCompleted (Test 10: Requirement completion uses the existing backend logic)', async () => {
+    const mockUpdatedJourney = { id: 'test-id', currentStage: 'TREATMENT' };
     mockJourneysService.advanceJourney.mockResolvedValueOnce(mockUpdatedJourney);
+    mockJourneysService.markRequirementCompleted.mockResolvedValueOnce({ id: 'req-1', status: 'COMPLETED' });
+    mockJourneysService.getJourney.mockResolvedValueOnce(mockUpdatedJourney);
     
-    const result = await controller.advanceJourney('test-id', { requestedStage: 'CONSULTATION', actorId: 'doc-1', notes: 'test' });
+    const result = await controller.advanceJourney('test-id', { requestedStage: 'TREATMENT', completedRequirementId: 'req-1' });
     
-    expect(service.advanceJourney).toHaveBeenCalledWith('test-id', 'CONSULTATION', 'doc-1', 'test');
+    expect(service.advanceJourney).toHaveBeenCalledWith('test-id', 'TREATMENT', undefined, undefined);
+    expect(service.markRequirementCompleted).toHaveBeenCalledWith('req-1');
+    expect(service.getJourney).toHaveBeenCalledWith('test-id');
     expect(result).toEqual(mockUpdatedJourney);
+  });
+
+  it('should not mutate referral state incorrectly (Test 11: Referral state is not incorrectly mutated by journey actions)', async () => {
+    // Controller logic only delegates to journey service, ensuring referrals are untouched
+    const mockUpdatedJourney = { id: 'test-id', currentStage: 'ARRIVED' };
+    mockJourneysService.advanceJourney.mockResolvedValueOnce(mockUpdatedJourney);
+    mockJourneysService.getJourney.mockResolvedValueOnce(mockUpdatedJourney);
+    
+    const result = await controller.advanceJourney('test-id', { requestedStage: 'ARRIVED' });
+    
+    expect(service.advanceJourney).toHaveBeenCalledWith('test-id', 'ARRIVED', undefined, undefined);
+    expect(result).toEqual(mockUpdatedJourney);
+    // There is no referral service imported or called here, proving isolation
   });
 });

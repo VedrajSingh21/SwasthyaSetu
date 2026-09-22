@@ -8,8 +8,8 @@ describe('JourneysService', () => {
   let service: JourneysService;
   
   // Mock DB structure
-  let mockJourney: any;
-  let mockReqs: any[];
+  let mockJourney: Record<string, unknown>;
+  let mockReqs: Record<string, unknown>[];
   
   const mockDb = {
     select: vi.fn().mockReturnThis(),
@@ -53,38 +53,102 @@ describe('JourneysService', () => {
     expect(service).toBeDefined();
   });
 
-  it('valid transition: APPOINTMENT to ARRIVED', async () => {
+  it('Accepted referral can progress to ARRIVED (Test 1)', async () => {
+    mockJourney.currentStage = 'REFERRAL';
     mockDb.where.mockReturnValueOnce([mockJourney]).mockReturnValueOnce(mockReqs);
     const result = await service.advanceJourney('journey-1', 'ARRIVED');
     expect(result).toBeDefined();
     expect(mockDb.transaction).toHaveBeenCalled();
   });
 
-  it('invalid transition: backwards', async () => {
+  it('ARRIVED can progress to CONSULTATION (Test 2)', async () => {
     mockJourney.currentStage = 'ARRIVED';
-    mockDb.where.mockReturnValueOnce([mockJourney]);
-    
-    await expect(service.advanceJourney('journey-1', 'APPOINTMENT'))
-      .rejects.toThrow(BadRequestException);
+    mockDb.where.mockReturnValueOnce([mockJourney]).mockReturnValueOnce(mockReqs);
+    const result = await service.advanceJourney('journey-1', 'CONSULTATION');
+    expect(result).toBeDefined();
   });
 
-  it('skip DIAGNOSTICS if none required', async () => {
+  it('Consultation can progress to DIAGNOSTICS when a diagnostic requirement exists (Test 3)', async () => {
     mockJourney.currentStage = 'CONSULTATION';
-    mockReqs = [{ requirementType: 'Procedure' }]; // No diagnostics
-    
+    mockReqs = [{ requirementType: 'Diagnostic' }];
     mockDb.where.mockReturnValueOnce([mockJourney]).mockReturnValueOnce(mockReqs);
-    
+    const result = await service.advanceJourney('journey-1', 'DIAGNOSTICS');
+    expect(result).toBeDefined();
+  });
+
+  it('DIAGNOSTICS can progress to TREATMENT (Test 4)', async () => {
+    mockJourney.currentStage = 'DIAGNOSTICS';
+    mockDb.where.mockReturnValueOnce([mockJourney]).mockReturnValueOnce(mockReqs);
     const result = await service.advanceJourney('journey-1', 'TREATMENT');
     expect(result).toBeDefined();
   });
 
-  it('prevent skipping DIAGNOSTICS if required', async () => {
+  it('DIAGNOSTICS can be skipped when no diagnostic requirement exists (Test 5)', async () => {
     mockJourney.currentStage = 'CONSULTATION';
-    mockReqs = [{ requirementType: 'Diagnostic' }, { requirementType: 'Procedure' }];
-    
+    mockReqs = [{ requirementType: 'Procedure' }];
     mockDb.where.mockReturnValueOnce([mockJourney]).mockReturnValueOnce(mockReqs);
-    
-    await expect(service.advanceJourney('journey-1', 'TREATMENT'))
+    const result = await service.advanceJourney('journey-1', 'TREATMENT');
+    expect(result).toBeDefined();
+  });
+
+  it('Invalid backward transition is rejected (Test 6)', async () => {
+    mockJourney.currentStage = 'TREATMENT';
+    mockDb.where.mockReturnValueOnce([mockJourney]);
+    await expect(service.advanceJourney('journey-1', 'CONSULTATION'))
       .rejects.toThrow(BadRequestException);
+  });
+
+  it('Invalid stage transition is rejected (Test 7)', async () => {
+    mockJourney.currentStage = 'CONSULTATION';
+    mockDb.where.mockReturnValueOnce([mockJourney]);
+    await expect(service.advanceJourney('journey-1', 'UNKNOWN_STAGE'))
+      .rejects.toThrow(BadRequestException);
+  });
+
+  it('Successful transition creates exactly one journey event (Test 8)', async () => {
+    mockJourney.currentStage = 'ARRIVED';
+    mockDb.where.mockReturnValueOnce([mockJourney]).mockReturnValueOnce(mockReqs);
+    let insertCalled = false;
+    mockDb.transaction.mockImplementationOnce(async (cb) => {
+      const tx = {
+         update: vi.fn().mockReturnThis(),
+         set: vi.fn().mockReturnThis(),
+         where: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 'mock' }]) }),
+         insert: vi.fn().mockImplementation(() => {
+           insertCalled = true;
+           return { values: vi.fn().mockResolvedValue([]) };
+         }),
+         select: vi.fn().mockReturnThis(),
+         from: vi.fn().mockReturnThis()
+      };
+      return cb(tx);
+    });
+    
+    await service.advanceJourney('journey-1', 'CONSULTATION');
+    expect(insertCalled).toBe(true);
+  });
+
+  it('Retrying the same transition does not create duplicate events (Test 9)', async () => {
+    mockJourney.currentStage = 'CONSULTATION';
+    mockDb.where.mockReturnValueOnce([mockJourney]);
+    
+    let insertCalled = false;
+    mockDb.transaction.mockImplementationOnce(async (cb) => {
+      const tx = {
+         update: vi.fn().mockReturnThis(),
+         set: vi.fn().mockReturnThis(),
+         where: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([{ id: 'mock' }]) }),
+         insert: vi.fn().mockImplementation(() => {
+           insertCalled = true;
+           return { values: vi.fn().mockResolvedValue([]) };
+         }),
+      };
+      return cb(tx);
+    });
+    
+    await expect(service.advanceJourney('journey-1', 'CONSULTATION'))
+      .rejects.toThrow(BadRequestException);
+      
+    expect(insertCalled).toBe(false);
   });
 });

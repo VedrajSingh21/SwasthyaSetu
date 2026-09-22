@@ -6,8 +6,8 @@ export default function FacilityDashboard() {
   const facility = mockFacilities[0]; // District Hospital
   const readiness = mockCareReadiness[0]; // DH readiness
   
-  const pendingCount = mockReferrals.filter(r => r.status === "Pending Review").length;
-  const acceptedCount = mockReferrals.filter(r => r.status === "Accepted").length;
+  const pendingCount = mockReferrals.filter(r => r.status === "PENDING").length;
+  const acceptedCount = mockReferrals.filter(r => r.status === "ACCEPTED").length;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -48,7 +48,7 @@ export default function FacilityDashboard() {
               <Link to="/facility/referrals" className="text-sm text-teal-600 font-medium hover:underline">View all</Link>
             </div>
             <div className="divide-y divide-slate-100">
-              {mockReferrals.filter(r => r.status === "Pending Review").map(ref => (
+              {mockReferrals.filter(r => r.status === "PENDING").map(ref => (
                 <div key={ref.id} className="p-6 hover:bg-slate-50 transition-colors">
                   <div className="flex justify-between items-start">
                     <div>

@@ -56,7 +56,23 @@ export class PatientsService {
 
   async findJourneys(id: string) {
     await this.findOne(id);
-    const { careJourneys } = await import('../../database/schema/journeys.js');
-    return this.db.select().from(careJourneys).where(eq(careJourneys.patientId, id));
+    const { careJourneys, careJourneyEvents } = await import('../../database/schema/journeys.js');
+    const { careRequirements } = await import('../../database/schema/care.js');
+    
+    const journeys = await this.db.select().from(careJourneys).where(eq(careJourneys.patientId, id));
+    
+    if (journeys.length === 0) return [];
+
+    return Promise.all(journeys.map(async (j: any) => {
+      const events = await this.db.select().from(careJourneyEvents).where(eq(careJourneyEvents.journeyId, j.id));
+      const reqs = j.careBundleId 
+         ? await this.db.select().from(careRequirements).where(eq(careRequirements.careBundleId, j.careBundleId))
+         : [];
+      return {
+         ...j,
+         events: events.sort((a: any, b: any) => a.createdAt.getTime() - b.createdAt.getTime()),
+         requirements: reqs
+      };
+    }));
   }
 }

@@ -17,9 +17,11 @@ export interface Facility {
 
 export interface CareRequirement {
   id: string;
-  type: "Consultation" | "Diagnostic" | "Procedure";
+  type?: "Consultation" | "Diagnostic" | "Procedure";
+  requirementType?: "Consultation" | "Diagnostic" | "Procedure";
   name: string;
-  specialty: string;
+  specialty?: string;
+  status?: string;
 }
 
 export interface CareBundle {
@@ -42,17 +44,12 @@ export interface CareReadiness {
 }
 
 export type ReferralStatus = 
-  | "Pending" 
-  | "Pending Review"
-  | "Accepted" 
-  | "Appointment Confirmed"
-  | "In Care"
-  | "CARE COMPLETED"
-  | "Follow-up Pending"
-  | "REROUTED — ALTERNATIVE FOUND"
-  | "Cannot Fulfil"
-  | "Completed" 
-  | "Blocked";
+  | "PENDING" 
+  | "ACCEPTED" 
+  | "COMPLETED" 
+  | "CANCELLED"
+  | "BLOCKED"
+  | "REROUTED";
 
 export interface Referral {
   id: string;
@@ -82,15 +79,23 @@ export interface Diagnostic {
   result?: string;
 }
 
+export interface CareJourneyEvent {
+  id: string;
+  journeyId: string;
+  stage: string;
+  eventType: string;
+  metadata?: any;
+  createdAt: string;
+}
+
 export interface CareJourney {
   id: string;
   patientId: string;
-  steps: {
-    id: string;
-    title: string;
-    status: "Completed" | "Active" | "Pending" | "Blocked";
-    description?: string;
-  }[];
+  careBundleId?: string;
+  currentStage: string;
+  status: "ACTIVE" | "COMPLETED" | "CANCELLED";
+  events?: CareJourneyEvent[];
+  requirements?: CareRequirement[];
 }
 
 export interface FollowUp {

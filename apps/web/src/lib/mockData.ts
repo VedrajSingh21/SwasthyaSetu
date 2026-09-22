@@ -12,8 +12,20 @@ export const mockPatients: Patient[] = [
 ];
 
 export const mockFacilities: Facility[] = [
-  { id: "f1", name: "District Hospital Pune", district: "Pune", type: "DH", distance: 12 },
-  { id: "f2", name: "Kothrud PHC", district: "Pune", type: "PHC", distance: 3 },
+  {
+    id: "fac-1",
+    name: "District Hospital Central",
+    district: "Central",
+    type: "DH",
+    distance: 12
+  },
+  {
+    id: "fac-2",
+    name: "Community Health Center North",
+    district: "North",
+    type: "CHC",
+    distance: 5
+  },
   { id: "f3", name: "Sassoon General Hospital", district: "Pune", type: "Specialty", distance: 15 },
 ];
 
@@ -59,15 +71,10 @@ export const mockCareReadiness: CareReadiness[] = [
 export const mockCareJourney: CareJourney = {
   id: "j1",
   patientId: "p1",
-  steps: [
-    { id: "s1", title: "Assessment", status: "Completed", description: "Initial triage completed at PHC" },
-    { id: "s2", title: "Care Requirement", status: "Completed", description: "Cardiology Evaluation Bundle identified" },
-    { id: "s3", title: "Referral", status: "Active", description: "Finding Care Ready facility" },
-    { id: "s4", title: "Appointment", status: "Pending" },
-    { id: "s5", title: "Diagnostics", status: "Pending" },
-    { id: "s6", title: "Treatment", status: "Pending" },
-    { id: "s7", title: "Follow-up", status: "Pending" },
-  ]
+  currentStage: "REFERRAL",
+  status: "ACTIVE",
+  events: [],
+  requirements: []
 };
 
 export const mockReferrals: Referral[] = [
@@ -77,7 +84,7 @@ export const mockReferrals: Referral[] = [
     sourceFacilityId: "f2", // PHC
     targetFacilityId: "f1", // DH
     careBundleId: "cb1",
-    status: "Pending Review",
+    status: "PENDING",
     date: new Date().toISOString(),
     priority: "High",
     completedServices: []
@@ -88,7 +95,7 @@ export const mockReferrals: Referral[] = [
     sourceFacilityId: "f2", // PHC
     targetFacilityId: "f1", // DH
     careBundleId: "cb1",
-    status: "Accepted",
+    status: "ACCEPTED",
     date: new Date().toISOString(),
     priority: "Medium",
     completedServices: []
