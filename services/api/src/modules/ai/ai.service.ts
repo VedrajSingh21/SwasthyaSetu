@@ -12,10 +12,11 @@ export class AiService {
   constructor() {
     const aiProvider = process.env.AI_PROVIDER || 'mock';
     if (aiProvider === 'gemini') {
-      const apiKey = process.env.GEMINI_API_KEY || '';
+      const apiKey = process.env.MODEL_API_KEY || '';
       if (!apiKey) {
-        throw new Error('GEMINI_API_KEY is missing. Cannot initialize GeminiProvider.');
+        throw new Error('MODEL_API_KEY is missing. Cannot initialize GeminiProvider.');
       }
+      console.log('MODEL_API_KEY configured: true');
       this.provider = new GeminiProvider(apiKey);
     } else if (aiProvider === 'mock') {
       this.provider = new MockAiProvider();
@@ -57,5 +58,13 @@ export class AiService {
     } catch (error: any) {
       throw new BadRequestException(`AI Extraction Failed: ${error.message}`);
     }
+  }
+
+  async generateText(prompt: string): Promise<string> {
+    return this.provider.generateText(prompt);
+  }
+
+  async chat(messages: any[], tools: any[] = []): Promise<any> {
+    return this.provider.chat(messages, tools);
   }
 }

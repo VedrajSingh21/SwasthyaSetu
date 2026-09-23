@@ -25,4 +25,6 @@ export interface AiExtractionResult {
 
 export interface AiProvider {
   extractCareRequirements(input: AiAssessmentInput): Promise<AiExtractionResult>;
+  generateText(prompt: string): Promise<string>;
+  chat(messages: any[], tools: any[]): Promise<any>;
 }

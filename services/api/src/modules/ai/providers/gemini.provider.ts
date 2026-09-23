@@ -6,7 +6,7 @@ export class GeminiProvider implements AiProvider {
   
   constructor(apiKey: string) {
     if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is required to initialize GeminiProvider');
+      throw new Error('MODEL_API_KEY is required to initialize GeminiProvider');
     }
     this.ai = new GoogleGenAI({ apiKey });
   }
@@ -69,7 +69,7 @@ Additional Context: ${input.additionalContext || 'None'}
     };
 
     const response = await this.ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.6-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -126,5 +126,26 @@ Additional Context: ${input.additionalContext || 'None'}
         isMock: false,
       }
     };
+  }
+
+  async generateText(prompt: string): Promise<string> {
+    const response = await this.ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: prompt,
+    });
+    
+    return response.text || '';
+  }
+
+  async chat(messages: any[], tools: any[]): Promise<any> {
+    const response = await this.ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: messages,
+      config: {
+        tools: tools.length > 0 ? [{ functionDeclarations: tools }] : undefined,
+      }
+    });
+
+    return response;
   }
 }
