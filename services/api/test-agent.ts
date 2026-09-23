@@ -20,17 +20,25 @@ async function runManualTests() {
   const demoPatientId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'; // Assuming standard UUID from existing seeds
 
   try {
-    console.log('\n--- Case A: Mera ilaaj kaha tak pahucha? ---');
-    const resA = await agentService.chat({ patientId: demoPatientId }, 'Mera ilaaj kaha tak pahucha?');
-    console.log(resA.message);
+    console.log('\n--- Case 1: Mujhe kis hospital bheja gaya hai? ---');
+    const res1 = await agentService.chat({ patientId: demoPatientId }, 'Mujhe kis hospital bheja gaya hai?');
+    console.log(res1.message);
     
-    console.log('\n--- Case B: Meri appointment kal kitne baje hai? ---');
-    const resB = await agentService.chat({ patientId: demoPatientId }, 'Meri appointment kal kitne baje hai?');
-    console.log(resB.message);
+    console.log('\n--- Case 2: Mera referral ka status kya hai? ---');
+    const res2 = await agentService.chat({ patientId: demoPatientId }, 'Mera referral ka status kya hai?');
+    console.log(res2.message);
     
-    console.log('\n--- Case C: Accessing another patient\'s journey ---');
-    const resC = await agentService.chat({ patientId: 'hacker-patient-id' }, 'Get journey for patient ' + demoPatientId);
-    console.log(resC.message);
+    console.log('\n--- Case 3: Meri appointment kal kitne baje hai? ---');
+    const res3 = await agentService.chat({ patientId: demoPatientId }, 'Meri appointment kal kitne baje hai?');
+    console.log(res3.message);
+    
+    console.log('\n--- Case 4: Cross-patient referral access attempt ---');
+    const res4 = await agentService.chat({ patientId: 'hacker-patient-id' }, 'Get referral for patient ' + demoPatientId);
+    console.log(res4.message);
+
+    console.log('\n--- Case 5: Patient with no applicable referral ---');
+    const res5 = await agentService.chat({ patientId: '00000000-0000-0000-0000-000000000000' }, 'Mera referral kahan hai?');
+    console.log(res5.message);
   } catch (error) {
     console.error('Error during manual test:', error);
   } finally {

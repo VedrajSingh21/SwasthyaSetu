@@ -4,9 +4,10 @@ import { AiService } from './ai.service.js';
 import { AgentService } from './agent.service.js';
 import { AgentController } from './agent.controller.js';
 import { PatientsModule } from '../patients/patients.module.js';
+import { FacilitiesModule } from '../facilities/facilities.module.js';
 
 @Module({
-  imports: [PatientsModule],
+  imports: [PatientsModule, FacilitiesModule],
   controllers: [AiController, AgentController],
   providers: [AiService, AgentService],
   exports: [AiService, AgentService],

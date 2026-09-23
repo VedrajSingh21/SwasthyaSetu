@@ -1,13 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AgentService } from './agent.service.js';
 import { AiService } from './ai.service.js';
-import { PatientsService } from '../patients/patients.service.js';
 import { AgentContext } from './agent.types.js';
+import { PatientsService } from '../patients/patients.service.js';
+import { FacilitiesService } from '../facilities/facilities.service.js';
 
 describe('AgentService', () => {
   let service: AgentService;
   let aiServiceMock: any;
   let patientsServiceMock: any;
+  let facilitiesServiceMock: any;
 
   beforeEach(async () => {
     aiServiceMock = {
@@ -16,6 +18,11 @@ describe('AgentService', () => {
     
     patientsServiceMock = {
       findJourneys: vi.fn(),
+      findReferrals: vi.fn(),
+    };
+
+    facilitiesServiceMock = {
+      findOne: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -23,6 +30,7 @@ describe('AgentService', () => {
         AgentService,
         { provide: AiService, useValue: aiServiceMock },
         { provide: PatientsService, useValue: patientsServiceMock },
+        { provide: FacilitiesService, useValue: facilitiesServiceMock },
       ],
     }).compile();
 

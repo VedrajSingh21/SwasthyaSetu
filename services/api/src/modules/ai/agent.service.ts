@@ -1,8 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { AiService } from './ai.service.js';
 import { PatientsService } from '../patients/patients.service.js';
+import { FacilitiesService } from '../facilities/facilities.service.js';
 import { AgentContext, ToolRegistry } from './agent.types.js';
 import { createGetCurrentJourneyTool } from './tools/get-current-journey.tool.js';
+import { createGetCurrentReferralTool } from './tools/get-current-referral.tool.js';
 
 @Injectable()
 export class AgentService {
@@ -11,8 +13,10 @@ export class AgentService {
   constructor(
     @Inject(AiService) private readonly aiService: AiService,
     @Inject(PatientsService) private readonly patientsService: PatientsService,
+    @Inject(FacilitiesService) private readonly facilitiesService: FacilitiesService,
   ) {
     this.toolRegistry.register(createGetCurrentJourneyTool(this.patientsService));
+    this.toolRegistry.register(createGetCurrentReferralTool(this.patientsService, this.facilitiesService));
   }
 
   private getSystemPrompt(): string {
@@ -28,8 +32,9 @@ You must only use information returned by approved NIVARA HEALTHCARE tools.
 Never invent patient information, journey stages, appointments, hospitals, doctors, tests, or treatment information.
 
 For questions about the patient's healthcare journey, use getCurrentJourney.
+For questions about the patient's referral (e.g. which hospital they are referred to, referral status), use getCurrentReferral.
 
-If the tool returns no journey, clearly tell the patient that their journey information is currently unavailable.
+If a tool returns no data (e.g. no journey or no referral), clearly tell the patient that the information is currently unavailable.
 
 Use simple Hindi or Hinglish when the patient speaks Hindi or Hinglish.
 

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AiService } from './ai.service';
-import { MockAiProvider } from './providers/mock.provider';
+import { AiService } from './ai.service.js';
+import { MockAiProvider } from './providers/mock.provider.js';
 
 describe('AiService', () => {
   let service: AiService;

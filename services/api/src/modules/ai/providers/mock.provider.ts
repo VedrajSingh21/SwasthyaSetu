@@ -152,6 +152,15 @@ export class MockAiProvider implements AiProvider {
       };
     }
     
+    if (text.includes("hospital") || text.includes("referral")) {
+      return {
+        functionCalls: [{
+          name: "getCurrentReferral",
+          args: { patientId: "f47ac10b-58cc-4372-a567-0e02b2c3d479" }
+        }]
+      };
+    }
+
     if (text.includes("appointment")) {
       return { text: "Main abhi appointments ke baare mein jankari nahi de sakta." };
     }
