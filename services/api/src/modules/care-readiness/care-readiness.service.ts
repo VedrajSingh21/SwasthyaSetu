@@ -191,14 +191,21 @@ export class CareReadinessService {
     }
 
     const total = input.requirements.length;
-    let readinessScore = 100;
-    let status: 'CARE_READY' | 'NOT_CARE_READY' = 'CARE_READY';
+    let readinessScore = 0;
+    let status: 'CARE_READY' | 'NOT_CARE_READY' = 'NOT_CARE_READY';
 
     if (total > 0) {
       readinessScore = Math.round((fulfillableCount / total) * 100);
-      if (fulfillableCount < total) {
-        status = 'NOT_CARE_READY';
+      if (fulfillableCount === total) {
+        status = 'CARE_READY';
       }
+    } else {
+      blockingReasons.push({
+        code: 'SERVICE_UNAVAILABLE',
+        serviceId: 'none',
+        serviceName: 'No Requirements Specified',
+        message: 'Care bundle does not have any active clinical requirements.',
+      });
     }
 
     return {
@@ -237,9 +244,59 @@ export class CareReadinessService {
       };
     }
 
+    // Pre-fetch requirements ONCE
+    const requirements = await this.db.select().from(careRequirements).where(eq(careRequirements.careBundleId, bundleId));
+    const requiredServices = requirements.map((req: any) => req.serviceId);
+    const facilityIds = allFacilities.map((f: any) => f.id);
+
+    // Batch pre-fetch all facility services & capacity in 2 queries total (Eliminates N+1 query storm)
+    let allFacServices: any[] = [];
+    let allFacCapacity: any[] = [];
+
+    if (requiredServices.length > 0 && facilityIds.length > 0) {
+      allFacServices = await this.db.select().from(facilityServices).where(
+        and(
+          inArray(facilityServices.facilityId, facilityIds),
+          inArray(facilityServices.serviceId, requiredServices)
+        )
+      );
+
+      allFacCapacity = await this.db.select().from(facilityCapacity).where(
+        and(
+          inArray(facilityCapacity.facilityId, facilityIds),
+          inArray(facilityCapacity.serviceId, requiredServices)
+        )
+      );
+    }
+
     const facilityResults = [];
     for (const facility of allFacilities) {
-      const input = await this.getReadinessInput(facility.id, bundleId);
+      let availableServices: string[] = [];
+      let unavailableServices: string[] = [];
+
+      const facServices = allFacServices.filter((fs: any) => fs.facilityId === facility.id);
+      const facCapacity = allFacCapacity.filter((fc: any) => fc.facilityId === facility.id);
+
+      for (const reqServiceId of requiredServices) {
+        const hasService = facServices.find((fs: any) => fs.serviceId === reqServiceId && fs.availabilityStatus === true);
+        if (hasService) {
+          availableServices.push(reqServiceId);
+        } else {
+          unavailableServices.push(reqServiceId);
+        }
+      }
+
+      const input: FacilityReadinessInput = {
+        facilityId: facility.id,
+        facility,
+        bundleId,
+        bundle,
+        requirements,
+        availableServices,
+        unavailableServices,
+        capacityInformation: facCapacity,
+      };
+
       const readiness = this.evaluateReadiness(input);
       facilityResults.push(readiness);
     }

@@ -70,11 +70,15 @@ export default function Assessment() {
     
     if (networkStatus === 'OFFLINE') {
       const recordId = `assessment_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const offlinePayload = {
+        ...formData,
+        patientId: config.demoPatientId || '00000000-0000-0000-0000-000000000000',
+      };
       try {
         await offlineDb.storeRecord({
           id: recordId,
           entityType: 'Assessment',
-          payload: formData,
+          payload: offlinePayload,
           lastModifiedLocallyAt: new Date().toISOString(),
           syncStatus: 'PENDING'
         });
@@ -84,7 +88,7 @@ export default function Assessment() {
           entityType: 'Assessment',
           entityId: recordId,
           operationType: 'CREATE',
-          payload: formData,
+          payload: offlinePayload,
           createdAt: new Date().toISOString(),
           retryCount: 0,
           syncStatus: 'PENDING'
@@ -114,13 +118,14 @@ export default function Assessment() {
       };
 
       const response = await processAssessment(payload);
+      const reqList = response.requirements || (response as any).careRequirements || [];
       
       // Map to the existing UI state
       setAiResult({
         title: response.careBundle.title,
         priority: response.careBundle.priority as any,
         reason: 'Analyzed from patient assessment.',
-        requirements: response.requirements.map(r => ({
+        requirements: reqList.map(r => ({
           id: r.id,
           type: r.requirementType as any,
           name: r.name,

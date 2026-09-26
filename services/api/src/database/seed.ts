@@ -3,8 +3,20 @@ import postgres from 'postgres';
 import * as schema from './schema/index.js';
 import * as dotenv from 'dotenv';
 import { resolve } from 'path';
+import { existsSync } from 'fs';
 
-dotenv.config({ path: resolve(process.cwd(), '../../.env') });
+const candidateEnvPaths = [
+  resolve(process.cwd(), '.env'),
+  resolve(process.cwd(), '../.env'),
+  resolve(process.cwd(), '../../.env'),
+];
+for (const p of candidateEnvPaths) {
+  if (existsSync(p)) {
+    dotenv.config({ path: p });
+    break;
+  }
+}
+dotenv.config();
 
 const connectionString = process.env.DATABASE_URL;
 

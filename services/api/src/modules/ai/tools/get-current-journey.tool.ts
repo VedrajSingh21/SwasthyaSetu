@@ -56,16 +56,16 @@ export function createGetCurrentJourneyTool(patientsService: PatientsService): A
           requirements: activeJourney.requirements.map((r: any) => ({
             id: r.id,
             requirementType: r.requirementType,
-            serviceName: r.serviceName,
+            serviceName: r.name || r.serviceName || 'Required Care Service',
             status: r.status,
             priority: r.priority,
           })),
           pendingRequirements: activeJourney.requirements
             .filter((r: any) => r.status !== 'COMPLETED')
-            .map((r: any) => ({ serviceName: r.serviceName, type: r.requirementType })),
+            .map((r: any) => ({ serviceName: r.name || r.serviceName || 'Required Care Service', type: r.requirementType })),
           completedRequirements: activeJourney.requirements
             .filter((r: any) => r.status === 'COMPLETED')
-            .map((r: any) => ({ serviceName: r.serviceName, type: r.requirementType })),
+            .map((r: any) => ({ serviceName: r.name || r.serviceName || 'Required Care Service', type: r.requirementType })),
         };
       } catch (error: any) {
         if (error.status === 404) {

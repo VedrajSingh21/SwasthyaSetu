@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import { CareReadinessService, BlockingReason } from '../care-readiness/care-readiness.service.js';
 import { DATABASE_CONNECTION } from '../../database/database.provider.js';
 import { eq, and } from 'drizzle-orm';
@@ -167,10 +167,10 @@ export class DynamicRoutingService {
       throw new NotFoundException(`Referral ${referralId} not found`);
     }
     if (!referral.careBundleId) {
-      throw new Error('Referral has no associated Care Bundle');
+      throw new BadRequestException('Referral has no associated Care Bundle');
     }
     if (!referral.destinationFacilityId) {
-      throw new Error('Referral has no current destination facility');
+      throw new BadRequestException('Referral has no current destination facility');
     }
 
     const rerouteRes = await this.getReroutingRecommendation(referral.careBundleId, referral.destinationFacilityId);
@@ -246,7 +246,13 @@ export class DynamicRoutingService {
       recoveryStatus: 'REROUTED',
       referralId,
       currentFacility: rerouteRes.currentFacility,
-      newFacility: rerouteRes.alternative as unknown as RoutingCandidate,
+      newFacility: {
+        facilityId: rerouteRes.alternative.facilityId,
+        facilityName: rerouteRes.alternative.facilityName,
+        status: rerouteRes.alternative.status,
+        readinessScore: rerouteRes.alternative.readinessScore,
+        blockingReasons: [],
+      },
       reason: 'CURRENT_FACILITY_NOT_CARE_READY',
     };
   }

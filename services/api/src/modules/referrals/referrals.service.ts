@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject, Optional } from '@nestjs/common';
 import { CreateReferralDto } from './dto/create-referral.dto.js';
 import { UpdateReferralStatusDto } from './dto/update-referral-status.dto.js';
 import { CareReadinessService } from '../care-readiness/care-readiness.service.js';
+import { SmsService } from '../notifications/sms.service.js';
 import { DATABASE_CONNECTION } from '../../database/database.provider.js';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { eq, and, notInArray } from 'drizzle-orm';
@@ -15,6 +16,7 @@ export class ReferralsService {
   constructor(
     private readonly careReadinessService: CareReadinessService,
     @Inject(DATABASE_CONNECTION) private readonly db: PostgresJsDatabase<any>,
+    @Optional() private readonly smsService?: SmsService,
   ) {}
 
   async create(dto: CreateReferralDto) {
@@ -86,6 +88,19 @@ export class ReferralsService {
 
       return newReferral;
     });
+
+    // Notify patient via DLT SMS Gateway if phone number available
+    if (this.smsService && patient.contact) {
+      this.smsService.sendSms({
+        toPhone: patient.contact,
+        template: 'REFERRAL_CREATED',
+        params: {
+          patientName: patient.name,
+          facilityName: facility.name,
+          token: result.id.slice(0, 8).toUpperCase(),
+        },
+      }).catch(err => console.error('SMS notification error:', err.message));
+    }
 
     return result;
   }

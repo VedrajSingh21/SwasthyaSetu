@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseUUIDPipe, NotFoundException, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseUUIDPipe, NotFoundException, Inject } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../database/database.provider.js';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../database/schema/index.js';
@@ -62,5 +62,85 @@ export class InteroperabilityController {
     }
 
     return InteroperabilityMapper.mapToPractitionerResource(user);
+  }
+
+  // --- Beckn Protocol (ABDM UHI / Open Health Network) ---
+
+  @Post('beckn/search')
+  async becknSearch(@Body() body: any) {
+    const facilitiesList = await this.db.select().from(schema.facilities).where(eq(schema.facilities.active, true));
+    
+    return {
+      context: {
+        domain: 'nic2004:85110', // Healthcare services
+        country: 'IND',
+        city: 'std:020',
+        action: 'on_search',
+        core_version: '0.9.3',
+        bap_id: body?.context?.bap_id || 'swasthyasetu.abdm.network',
+        bpp_id: 'swasthyasetu.provider.network',
+        transaction_id: body?.context?.transaction_id || `txn_${Date.now()}`,
+        message_id: `msg_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+      },
+      message: {
+        catalog: {
+          'bpp/descriptor': {
+            name: 'SwasthyaSetu Rural Care Network',
+          },
+          'bpp/providers': facilitiesList.map(f => ({
+            id: f.id,
+            descriptor: { name: f.name },
+            locations: [{ id: `loc_${f.id}`, gps: `${f.latitude || 18.5204},${f.longitude || 73.8567}` }],
+            categories: [{ id: f.type, descriptor: { name: f.type } }],
+          })),
+        },
+      },
+    };
+  }
+
+  @Post('beckn/init')
+  async becknInit(@Body() body: any) {
+    const order = body?.message?.order || {};
+    return {
+      context: {
+        ...body.context,
+        action: 'on_init',
+        timestamp: new Date().toISOString(),
+      },
+      message: {
+        order: {
+          id: `order_${Date.now()}`,
+          state: 'INITIALIZED',
+          provider: order.provider,
+          items: order.items || [{ id: 'care-bundle-referral', descriptor: { name: 'Care Continuity Referral' } }],
+          quote: { price: { currency: 'INR', value: '0' } }, // Free public healthcare
+        },
+      },
+    };
+  }
+
+  @Post('beckn/confirm')
+  async becknConfirm(@Body() body: any) {
+    const order = body?.message?.order || {};
+    return {
+      context: {
+        ...body.context,
+        action: 'on_confirm',
+        timestamp: new Date().toISOString(),
+      },
+      message: {
+        order: {
+          ...order,
+          id: order.id || `order_${Date.now()}`,
+          state: 'CONFIRMED',
+          status: 'ACCEPTED',
+          fulfillment: {
+            tracking: true,
+            status: 'CARE_READY',
+          },
+        },
+      },
+    };
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../database/database.provider.js';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { patients } from '../../database/schema/patients.js';
 
 @Injectable()
@@ -23,21 +23,16 @@ export class PatientsService {
     // Basic verification that patient exists (throws 404 if not)
     await this.findOne(id);
     
-    // Import dynamically as in other methods
     const { careBundles, careRequirements } = await import('../../database/schema/care.js');
     
-    // Get bundles
+    // Get bundles for this patient
     const bundles = await this.db.select().from(careBundles).where(eq(careBundles.patientId, id));
     
-    // Get requirements for those bundles
     if (bundles.length > 0) {
       const bundleIds = bundles.map((b: any) => b.id);
       
-      // Drizzle 'inArray' would be better, but doing it manually or via multiple queries is safer if we don't import inArray.
-      // Easiest is to fetch all requirements for this patient's bundles
-      // Actually we can just return the bundles. The dashboard only uses bundle.title, bundle.priority, bundle.status. 
-      // Requirements are useful but we can attach an empty array or fetch them if needed.
-      const reqs = await this.db.select().from(careRequirements);
+      // Filter specifically by bundle IDs instead of scanning whole table
+      const reqs = await this.db.select().from(careRequirements).where(inArray(careRequirements.careBundleId, bundleIds));
       
       return bundles.map((b: any) => ({
         ...b,
@@ -51,7 +46,13 @@ export class PatientsService {
   async findReferrals(id: string) {
     await this.findOne(id);
     const { referrals } = await import('../../database/schema/referrals.js');
-    return this.db.select().from(referrals).where(eq(referrals.patientId, id));
+    const refs = await this.db.select().from(referrals).where(eq(referrals.patientId, id));
+    // Normalize targetFacilityId for frontend backwards compatibility
+    return refs.map((r: any) => ({
+      ...r,
+      targetFacilityId: r.destinationFacilityId,
+      sourceFacilityId: r.referringFacilityId,
+    }));
   }
 
   async findJourneys(id: string) {

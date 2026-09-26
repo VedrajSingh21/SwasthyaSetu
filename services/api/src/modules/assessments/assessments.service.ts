@@ -78,7 +78,39 @@ export class AssessmentsService {
 
     for (const req of uniqueRequirements) {
       const normalizedReqName = req.serviceName.trim().toLowerCase();
-      const matchedService = allServices.find(s => s.name.trim().toLowerCase() === normalizedReqName);
+      
+      // 1. Exact match
+      let matchedService = allServices.find(s => s.name.trim().toLowerCase() === normalizedReqName);
+
+      // 2. Substring / contains match
+      if (!matchedService) {
+        matchedService = allServices.find(s => {
+          const sName = s.name.trim().toLowerCase();
+          return sName.includes(normalizedReqName) || normalizedReqName.includes(sName);
+        });
+      }
+
+      // 3. Clinical domain synonyms
+      if (!matchedService) {
+        if (normalizedReqName.includes('cardio') || normalizedReqName.includes('heart')) {
+          matchedService = allServices.find(s => s.name.toLowerCase().includes('cardio'));
+        } else if (normalizedReqName.includes('ecg') || normalizedReqName.includes('electrocardio')) {
+          matchedService = allServices.find(s => s.name.toLowerCase().includes('ecg'));
+        } else if (normalizedReqName.includes('blood') || normalizedReqName.includes('cbc') || normalizedReqName.includes('investigation') || normalizedReqName.includes('lab')) {
+          matchedService = allServices.find(s => s.name.toLowerCase().includes('blood'));
+        } else if (normalizedReqName.includes('ortho') || normalizedReqName.includes('bone')) {
+          matchedService = allServices.find(s => s.name.toLowerCase().includes('ortho'));
+        } else if (normalizedReqName.includes('x-ray') || normalizedReqName.includes('xray') || normalizedReqName.includes('radiology')) {
+          matchedService = allServices.find(s => s.name.toLowerCase().includes('x-ray') || s.name.toLowerCase().includes('xray'));
+        } else if (normalizedReqName.includes('follow') || normalizedReqName.includes('review')) {
+          matchedService = allServices.find(s => s.name.toLowerCase().includes('follow'));
+        }
+      }
+
+      // 4. Type fallback if unmapped
+      if (!matchedService && allServices.length > 0) {
+        matchedService = allServices.find(s => s.type === req.type);
+      }
 
       if (matchedService) {
         mappedRequirements.push({
@@ -105,7 +137,7 @@ export class AssessmentsService {
         assessmentId: assessment.id,
         title: `Assessment Bundle - ${new Date().toISOString().split('T')[0]}`,
         priority: input.severity === 'CRITICAL' ? 'High' : 'Medium',
-        status: 'ACTIVE',
+        status: mappedRequirements.length > 0 ? 'ACTIVE' : 'PENDING_REVIEW',
         source: 'LLM'
       }).returning();
       
@@ -142,6 +174,7 @@ export class AssessmentsService {
       unmappedRequirements,
       careBundle,
       careRequirements: createdRequirements,
+      requirements: createdRequirements, // Backward & Frontend compatibility
     };
   }
 }

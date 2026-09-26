@@ -40,6 +40,7 @@ export default function CarePlan() {
         </p>
         <Link 
           to="/patient/facilities" 
+          state={{ bundleId: bundle.id }}
           className="inline-flex items-center px-8 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold shadow-sm transition-colors w-full sm:w-auto justify-center"
         >
           Find Care-Ready Facilities

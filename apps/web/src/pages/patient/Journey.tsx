@@ -50,10 +50,11 @@ export default function Journey() {
       
       const ref = activeReferral;
       if (ref && !['COMPLETED', 'CANCELLED', 'REROUTED', 'BLOCKED'].includes(ref.status)) {
-         if (ref.targetFacilityId && ref.careBundleId) {
+         const destFacId = ref.targetFacilityId || (ref as any).destinationFacilityId;
+         if (destFacId && ref.careBundleId) {
             const routing = await dynamicRoutingApi.getReroute(
               ref.careBundleId, 
-              ref.targetFacilityId
+              destFacId
             );
             setRoutingState(routing);
          }

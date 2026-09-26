@@ -3,12 +3,14 @@ import { GoogleGenAI, Type, Schema } from '@google/genai';
 
 export class GeminiProvider implements AiProvider {
   private ai: GoogleGenAI;
+  private modelName: string;
   
   constructor(apiKey: string) {
     if (!apiKey) {
       throw new Error('MODEL_API_KEY is required to initialize GeminiProvider');
     }
     this.ai = new GoogleGenAI({ apiKey });
+    this.modelName = process.env.MODEL_NAME || 'gemini-2.5-flash';
   }
 
   async extractCareRequirements(input: AiAssessmentInput): Promise<AiExtractionResult> {
@@ -69,7 +71,7 @@ Additional Context: ${input.additionalContext || 'None'}
     };
 
     const response = await this.ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: this.modelName,
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -122,7 +124,7 @@ Additional Context: ${input.additionalContext || 'None'}
       confidenceScore: parsed.confidenceScore,
       metadata: {
         provider: 'gemini',
-        model: 'gemini-2.5-flash',
+        model: this.modelName,
         isMock: false,
       }
     };
@@ -130,7 +132,7 @@ Additional Context: ${input.additionalContext || 'None'}
 
   async generateText(prompt: string): Promise<string> {
     const response = await this.ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: this.modelName,
       contents: prompt,
     });
     
@@ -139,7 +141,7 @@ Additional Context: ${input.additionalContext || 'None'}
 
   async chat(messages: any[], tools: any[]): Promise<any> {
     const response = await this.ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: this.modelName,
       contents: messages,
       config: {
         tools: tools.length > 0 ? [{ functionDeclarations: tools }] : undefined,
