@@ -97,7 +97,16 @@ def create_deck():
                 r2.font.bold = False
                 r2.font.color.rgb = C_DARK
 
-    # Update team oval on slides 2 to 6
+    # Logo asset paths
+    logo_dir = os.path.abspath(r'assets\logo')
+    logo_full = os.path.join(logo_dir, 'swasthya_setu_logo_transparent.png')
+    logo_emblem = os.path.join(logo_dir, 'swasthya_setu_emblem_transparent.png')
+
+    # Add Project Logo to Slide 1 (Top Left Header to balance SIH 2026 logo on Top Right)
+    if os.path.exists(logo_full):
+        s1.shapes.add_picture(logo_full, Inches(0.55), Inches(0.28), Inches(1.35), Inches(1.35))
+
+    # Update team oval on slides 2 to 6 with brand emblem and team name
     for idx in range(1, 6):
         s = prs.slides[idx]
         for shape in s.shapes:
@@ -108,15 +117,20 @@ def create_deck():
                 tf.clear()
                 tf.margin_left = Inches(0.02)
                 tf.margin_right = Inches(0.02)
-                tf.margin_top = Inches(0.05)
-                tf.margin_bottom = Inches(0.05)
+                tf.margin_top = Inches(0.02)
+                tf.margin_bottom = Inches(0.02)
                 p = tf.paragraphs[0]
                 p.text = "SwasthyaSetu"
                 p.font.name = 'Arial'
-                p.font.size = Pt(8.5)
+                p.font.size = Pt(7.5)
                 p.font.bold = True
                 p.font.color.rgb = C_NAVY
                 p.alignment = PP_ALIGN.CENTER
+                p.space_before = Pt(26) # Push below emblem
+
+        # Add emblem inside oval
+        if os.path.exists(logo_emblem):
+            s.shapes.add_picture(logo_emblem, Inches(0.80), Inches(0.33), Inches(0.68), Inches(0.34))
 
     # Helper function to remove raw TextBox 8 placeholder
     def clear_placeholder(slide):
