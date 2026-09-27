@@ -29,6 +29,14 @@ def create_deck():
     C_RED = RGBColor(225, 29, 72)
     C_GOLD = RGBColor(217, 119, 6)
 
+    # Image asset paths
+    img_dir = os.path.abspath(r'assets\images')
+    img_referral = os.path.join(img_dir, 'referral_workflow_infographic.jpg')
+    img_tech = os.path.join(img_dir, 'platform_architecture_infographic.jpg')
+    img_feasibility = os.path.join(img_dir, 'feasibility_pillars_infographic.jpg')
+    img_impact = os.path.join(img_dir, 'impact_pillars_infographic.jpg')
+    img_research = os.path.join(img_dir, 'research_evidence_infographic.jpg')
+
     # -------------------------------------------------------------
     # SLIDE 1: TITLE PAGE
     # -------------------------------------------------------------
@@ -118,7 +126,7 @@ def create_deck():
                 sp.getparent().remove(sp)
 
     # -------------------------------------------------------------
-    # SLIDE 2: PROPOSED SOLUTION & INNOVATION
+    # SLIDE 2: PROPOSED SOLUTION & INNOVATION (WITH INFOGRAPHIC)
     # -------------------------------------------------------------
     s2 = prs.slides[1]
     clear_placeholder(s2)
@@ -127,10 +135,7 @@ def create_deck():
             shp.left = Inches(2.15); shp.width = Inches(8.40)
             shp.text_frame.text = "IDEA TITLE: SwasthyaSetu (ग्रामीण स्वास्थ्य रेफरल और देखभाल निरंतरता मंच)"
             for p in shp.text_frame.paragraphs:
-                p.font.name = 'Arial'
-                p.font.size = Pt(15.5)
-                p.font.bold = True
-                p.font.color.rgb = C_NAVY
+                p.font.name = 'Arial'; p.font.size = Pt(15.5); p.font.bold = True; p.font.color.rgb = C_NAVY
                 p.alignment = PP_ALIGN.CENTER
 
     sub_box = s2.shapes.add_textbox(Inches(0.67), Inches(1.18), Inches(12.0), Inches(0.35))
@@ -138,103 +143,91 @@ def create_deck():
     p.text = "Proposed Solution (Describe your Idea/Solution/Prototype) — Detailed Explanation | Problem Resolution | Uniqueness & Innovation"
     p.font.name = 'Arial'; p.font.size = Pt(10); p.font.bold = True; p.font.color.rgb = C_TEAL
 
-    # Top Split: The Problem & Solution Overview
-    card_w = Inches(5.85)
-    card_h = Inches(1.45)
-    top_y = Inches(1.55)
+    # LEFT: High-Resolution Workflow Infographic Diagram
+    if os.path.exists(img_referral):
+        s2.shapes.add_picture(img_referral, Inches(0.67), Inches(1.58), Inches(6.6), Inches(3.71))
+    
+    # Left Bottom: Key Novelty Banner Card
+    nov_box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.67), Inches(5.38), Inches(6.6), Inches(1.42))
+    nov_box.fill.solid(); nov_box.fill.fore_color.rgb = C_NAVY
+    nov_box.line.color.rgb = C_TEAL; nov_box.line.width = Pt(1.5)
+    tf_nov = nov_box.text_frame; tf_nov.word_wrap = True
+    tf_nov.margin_left = Inches(0.12); tf_nov.margin_right = Inches(0.12); tf_nov.margin_top = Inches(0.08)
+    p_nov = tf_nov.paragraphs[0]
+    p_nov.text = "KEY NOVELTY: The ONLY Closed-Loop Public Health Referral Platform"
+    p_nov.font.name = 'Arial'; p_nov.font.size = Pt(9.2); p_nov.font.bold = True; p_nov.font.color.rgb = C_WHITE
+    nov_bullets = [
+        "Bidirectional Care Visibility: Village Sub-Centre (AAM) ➔ PHC ➔ CHC ➔ District Hospital ➔ ASHA Counter-Referral.",
+        "National Digital Health Rails: Native ABDM UHI (FHIR R4), ABHA creation, and auto-triage for MJPJAY cashless coverage."
+    ]
+    for nb in nov_bullets:
+        pnb = tf_nov.add_paragraph()
+        pnb.text = "• " + nb
+        pnb.font.name = 'Arial'; pnb.font.size = Pt(7.8); pnb.font.color.rgb = RGBColor(226, 232, 240); pnb.space_before = Pt(2)
 
-    p_box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.67), top_y, card_w, card_h)
+    # RIGHT: Structured Problem, Solution & 4 Architectural Pillars
+    rx = Inches(7.45)
+    rw = Inches(5.22)
+
+    # Problem Card
+    p_box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, rx, Inches(1.58), rw, Inches(1.15))
     p_box.fill.solid(); p_box.fill.fore_color.rgb = RGBColor(254, 242, 242)
     p_box.line.color.rgb = RGBColor(254, 202, 202); p_box.line.width = Pt(1)
     tf = p_box.text_frame; tf.word_wrap = True
-    tf.margin_left = Inches(0.14); tf.margin_right = Inches(0.14); tf.margin_top = Inches(0.08)
+    tf.margin_left = Inches(0.10); tf.margin_right = Inches(0.10); tf.margin_top = Inches(0.06)
     p = tf.paragraphs[0]
-    p.text = "THE PROBLEM: The Rural Healthcare 'Clinical Black Hole'"
-    p.font.name = 'Arial'; p.font.size = Pt(10); p.font.bold = True; p.font.color.rgb = C_RED
-    bullets_p = [
-        "150,000+ blind paper referrals weekly across India's 31,000 PHCs without receiving notice.",
-        "48.2% Referral Drop-out: Patients travel 40-80 km only to find specialists absent or beds full.",
-        "Zero Counter-Referral: Discharges never reach village ASHAs, causing fatal relapses & OOPE debt."
-    ]
-    for b in bullets_p:
-        p_b = tf.add_paragraph()
-        p_b.text = "• " + b
-        p_b.font.name = 'Arial'; p_b.font.size = Pt(8.2); p_b.font.color.rgb = C_DARK; p_b.space_before = Pt(1.5)
+    p.text = "THE PROBLEM: The Rural 'Clinical Black Hole'"
+    p.font.name = 'Arial'; p.font.size = Pt(8.8); p.font.bold = True; p.font.color.rgb = C_RED
+    for b in [
+        "150,000+ blind paper referrals weekly across India's 31,000 PHCs without confirmation.",
+        "48.2% drop-out: Patients travel 40-80 km only to find specialists absent or beds full.",
+        "Zero Counter-Referral: Discharges never reach village ASHAs, causing fatal relapses."
+    ]:
+        pb = tf.add_paragraph()
+        pb.text = "• " + b
+        pb.font.name = 'Arial'; pb.font.size = Pt(7.2); pb.font.color.rgb = C_DARK; pb.space_before = Pt(1)
 
-    s_box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.82), top_y, card_w, card_h)
+    # Solution Card
+    s_box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, rx, Inches(2.80), rw, Inches(1.12))
     s_box.fill.solid(); s_box.fill.fore_color.rgb = C_TEAL_BG
     s_box.line.color.rgb = RGBColor(94, 234, 212); s_box.line.width = Pt(1)
     tf = s_box.text_frame; tf.word_wrap = True
-    tf.margin_left = Inches(0.14); tf.margin_right = Inches(0.14); tf.margin_top = Inches(0.08)
+    tf.margin_left = Inches(0.10); tf.margin_right = Inches(0.10); tf.margin_top = Inches(0.06)
     p = tf.paragraphs[0]
     p.text = "THE SOLUTION: AI-Powered Closed-Loop Care Orchestration"
-    p.font.name = 'Arial'; p.font.size = Pt(10); p.font.bold = True; p.font.color.rgb = C_TEAL
-    bullets_s = [
-        "End-to-End Care Continuity: Connects Sub-Centre (AAM) -> PHC -> CHC -> District Hospital.",
-        "Care Readiness Verification: Verifies 6-factor readiness before travel + auto-reroutes if blocked.",
-        "Zero-Typing & Zero-Data-Loss: Multilingual voice intake in Marathi + offline-first sync queue."
+    p.font.name = 'Arial'; p.font.size = Pt(8.8); p.font.bold = True; p.font.color.rgb = C_TEAL
+    for b in [
+        "End-to-End Orchestration: Real-time patient tracking from village clinic to tertiary discharge.",
+        "Care Readiness Verification: 6-factor check ensures specialist, ICU bed, & diagnostics ready.",
+        "Zero-Data-Loss: Multilingual Marathi voice intake + offline-first encrypted sync."
+    ]:
+        pb = tf.add_paragraph()
+        pb.text = "• " + b
+        pb.font.name = 'Arial'; pb.font.size = Pt(7.2); pb.font.color.rgb = C_DARK; pb.space_before = Pt(1)
+
+    # 4 Core Pillars Card
+    pil_box = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, rx, Inches(3.99), rw, Inches(2.81))
+    pil_box.fill.solid(); pil_box.fill.fore_color.rgb = C_LIGHT_BG
+    pil_box.line.color.rgb = C_BLUE; pil_box.line.width = Pt(1)
+    tf = pil_box.text_frame; tf.word_wrap = True
+    tf.margin_left = Inches(0.10); tf.margin_right = Inches(0.10); tf.margin_top = Inches(0.06)
+    p = tf.paragraphs[0]
+    p.text = "4 ARCHITECTURAL PILLARS (Frontline to Tertiary)"
+    p.font.name = 'Arial'; p.font.size = Pt(8.8); p.font.bold = True; p.font.color.rgb = C_NAVY
+    pillars_content = [
+        ("Pillar 1 (Voice-First):", " Bhashini Marathi/Hindi speech-to-text; 50s intake on 2GB RAM phones."),
+        ("Pillar 2 (Offline-First):", " SQLite/WatermelonDB CRDTs store 5,000+ records in monsoon blindspots."),
+        ("Pillar 3 (One-Trip Care):", " Bundles specialist OPD, ECG/CBC labs & transit into a single visit."),
+        ("Pillar 4 (Readiness WOW):", " Algorithmic pre-departure verification of doctor presence & ICU beds (<85%).")
     ]
-    for b in bullets_s:
-        p_b = tf.add_paragraph()
-        p_b.text = "• " + b
-        p_b.font.name = 'Arial'; p_b.font.size = Pt(8.2); p_b.font.color.rgb = C_DARK; p_b.space_before = Pt(1.5)
-
-    # Bottom Row: The 4 Core Architectural Pillars
-    pillar_w = Inches(2.85)
-    pillar_h = Inches(3.40)
-    pillar_y = Inches(3.12)
-    pillar_gap = Inches(0.20)
-    pillar_start_x = Inches(0.67)
-
-    pillars = [
-        ("Pillar 1: Voice-First Vernacular", C_BLUE, C_BLUE_BG, [
-            ("Tech:", " Bhashini Indic STT / NMT"),
-            ("Action:", " Spoken Marathi/Hindi symptom dictation (e.g. 'छातीत दुखणे, धाप लागणे')."),
-            ("Impact:", " Eliminates complex English text entry; reduces ASHA logging from 8m to 50s on basic Android Go phones.")
-        ]),
-        ("Pillar 2: Patient Offline-First", C_TEAL, C_TEAL_BG, [
-            ("Tech:", " SQLite / WatermelonDB CRDTs"),
-            ("Action:", " Local encrypted queue storing 5,000+ patient records on mobile device."),
-            ("Impact:", " Guaranteed zero data loss in rural monsoon network dead zones; automatic background sync on reconnect.")
-        ]),
-        ("Pillar 3: Coordinated One-Trip", C_NAVY, C_LIGHT_BG, [
-            ("Tech:", " Care Bundle Decision Model"),
-            ("Action:", " Bundles specialty consultation, on-site diagnostics (ECG, CBC), and documents."),
-            ("Impact:", " Stops the 'ping-pong' referral cycle; cuts travel & catastrophic out-of-pocket costs by >60%.")
-        ]),
-        ("Pillar 4: Care Readiness (WOW)", C_RED, RGBColor(255, 241, 242), [
-            ("Tech:", " 6-Factor Decision Engine"),
-            ("Action:", " Checks Doctor, Diagnostics, Equipment, ICU Beds (<85%), and Docs before departure."),
-            ("Impact:", " Stops door refusals; dynamic rerouting recovers referral if hospital becomes unavailable.")
-        ])
-    ]
-
-    for p_idx, (p_title, p_color, p_bg, p_lines) in enumerate(pillars):
-        px = pillar_start_x + p_idx * (pillar_w + pillar_gap)
-        card = s2.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, px, pillar_y, pillar_w, pillar_h)
-        card.fill.solid(); card.fill.fore_color.rgb = p_bg
-        card.line.color.rgb = p_color; card.line.width = Pt(1.2)
-        tf = card.text_frame; tf.word_wrap = True
-        tf.margin_left = Inches(0.12); tf.margin_right = Inches(0.12); tf.margin_top = Inches(0.10)
-        p = tf.paragraphs[0]
-        p.text = p_title
-        p.font.name = 'Arial'; p.font.size = Pt(9.5); p.font.bold = True; p.font.color.rgb = p_color
-        
-        for k, v in p_lines:
-            p_line = tf.add_paragraph()
-            p_line.space_before = Pt(3.5)
-            r1 = p_line.add_run(); r1.text = k; r1.font.name = 'Arial'; r1.font.size = Pt(8.0); r1.font.bold = True; r1.font.color.rgb = C_NAVY
-            r2 = p_line.add_run(); r2.text = v; r2.font.name = 'Arial'; r2.font.size = Pt(7.8); r2.font.bold = False; r2.font.color.rgb = C_DARK
-
-    u_box = s2.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.67), Inches(6.60), Inches(12.0), Inches(0.28))
-    u_box.fill.solid(); u_box.fill.fore_color.rgb = C_NAVY
-    u_box.line.fill.background()
-    p = u_box.text_frame.paragraphs[0]
-    p.text = "KEY NOVELTY: The ONLY system providing Closed-Loop Tracking (Village -> Hospital -> ASHA Counter-Referral) + ABDM UHI & MJPJAY Integration"
-    p.font.name = 'Arial'; p.font.size = Pt(8.2); p.font.bold = True; p.font.color.rgb = C_WHITE; p.alignment = PP_ALIGN.CENTER
+    for k, v in pillars_content:
+        p_row = tf.add_paragraph()
+        p_row.space_before = Pt(2.5)
+        r1 = p_row.add_run(); r1.text = "• " + k; r1.font.name = 'Arial'; r1.font.size = Pt(7.3); r1.font.bold = True; r1.font.color.rgb = C_NAVY
+        r2 = p_row.add_run(); r2.text = v; r2.font.name = 'Arial'; r2.font.size = Pt(7.1); r2.font.color.rgb = C_DARK
 
     # -------------------------------------------------------------
-    # SLIDE 3: TECHNICAL APPROACH
+    # SLIDE 3: TECHNICAL APPROACH (WITH ARCHITECTURE INFOGRAPHIC)
     # -------------------------------------------------------------
     s3 = prs.slides[2]
     clear_placeholder(s3)
@@ -251,69 +244,58 @@ def create_deck():
     p.text = "Technologies Used (Languages, Frameworks, Architecture) & Methodology Process (Flowcharts / Working Prototype Pipeline)"
     p.font.name = 'Arial'; p.font.size = Pt(10); p.font.bold = True; p.font.color.rgb = C_TEAL
 
-    flow_y = Inches(1.58)
-    flow_h = Inches(1.30)
-    box_w = Inches(1.85)
-    gap_x = Inches(0.18)
+    # LEFT: Platform Architecture Diagram Infographic
+    if os.path.exists(img_tech):
+        s3.shapes.add_picture(img_tech, Inches(0.67), Inches(1.58), Inches(6.5), Inches(3.66))
 
-    flow_steps = [
-        ("01. INTAKE & TRIAGE", "ASHA speaks Marathi;\nBhashini STT + OCR slip\ningests vitals offline.", C_BLUE, C_BLUE_BG),
-        ("02. CLINICAL CDSS", "ICMR/WHO rule engine\nflags Red/Amber triage;\nbuilds Care Bundle.", C_TEAL, C_TEAL_BG),
-        ("03. CARE READINESS", "6-factor check (Beds,\nDoctor, Diagnostics)\nat destination facility.", C_RED, RGBColor(254, 242, 242)),
-        ("04. DYNAMIC ROUTING", "Spatial Haversine matrix\npicks best hospital;\nDLT SMS token sent.", C_NAVY, C_LIGHT_BG),
-        ("05. FAST-TRACK OPD", "Hospital pre-notified;\npatient scans QR token;\nbypasses 3.5h line.", C_BLUE, C_BLUE_BG),
-        ("06. COUNTER-REFERRAL", "E-discharge auto-creates\nhome follow-up task on\nvillage ASHA app.", C_GREEN, RGBColor(236, 253, 245))
+    # Left Bottom: Care Orchestration Pipeline Summary Card
+    pipe_box = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.67), Inches(5.32), Inches(6.5), Inches(1.48))
+    pipe_box.fill.solid(); pipe_box.fill.fore_color.rgb = C_LIGHT_BG
+    pipe_box.line.color.rgb = C_TEAL; pipe_box.line.width = Pt(1.2)
+    tf_p = pipe_box.text_frame; tf_p.word_wrap = True
+    tf_p.margin_left = Inches(0.12); tf_p.margin_right = Inches(0.12); tf_p.margin_top = Inches(0.08)
+    p = tf_p.paragraphs[0]
+    p.text = "6-STAGE CARE ORCHESTRATION PIPELINE (WORKING PROTOTYPE)"
+    p.font.name = 'Arial'; p.font.size = Pt(8.8); p.font.bold = True; p.font.color.rgb = C_TEAL
+    steps = [
+        "01. Intake (Voice): ASHA speaks Marathi; Bhashini STT + OCR slip ingests vitals offline.",
+        "02. CDSS & Bundle: ICMR/WHO CDSS flags triage severity (Red/Amber) & bundles care.",
+        "03. Readiness Check: Algorithmic 6-factor check (Doctor, Beds, Diagnostics) at destination.",
+        "04. Dynamic Routing: Spatial PostGIS Haversine matrix routes patient; sends DLT SMS token.",
+        "05. Fast-Track OPD: Hospital pre-notified; patient scans QR token, bypassing 3.5h queues.",
+        "06. Counter-Referral: Tertiary discharge auto-creates home follow-up task on village ASHA app."
     ]
+    for st in steps:
+        p_st = tf_p.add_paragraph()
+        p_st.text = "• " + st
+        p_st.font.name = 'Arial'; p_st.font.size = Pt(6.9); p_st.font.color.rgb = C_DARK; p_st.space_before = Pt(1.2)
 
-    for f_idx, (f_title, f_desc, f_clr, f_bg) in enumerate(flow_steps):
-        fx = Inches(0.67) + f_idx * (box_w + gap_x)
-        shp = s3.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, fx, flow_y, box_w, flow_h)
-        shp.fill.solid(); shp.fill.fore_color.rgb = f_bg
-        shp.line.color.rgb = f_clr; shp.line.width = Pt(1.2)
-        tf = shp.text_frame; tf.word_wrap = True
-        tf.margin_left = Inches(0.08); tf.margin_right = Inches(0.08); tf.margin_top = Inches(0.08)
-        p = tf.paragraphs[0]
-        p.text = f_title
-        p.font.name = 'Arial'; p.font.size = Pt(8.2); p.font.bold = True; p.font.color.rgb = f_clr
-        p.alignment = PP_ALIGN.CENTER
-        p2 = tf.add_paragraph()
-        p2.text = f_desc
-        p2.font.name = 'Arial'; p2.font.size = Pt(7.4); p2.font.color.rgb = C_DARK; p2.space_before = Pt(2)
-        p2.alignment = PP_ALIGN.CENTER
-
-        if f_idx < 5:
-            arr_x = fx + box_w + Inches(0.02)
-            arr_box = s3.shapes.add_textbox(arr_x, flow_y + Inches(0.40), Inches(0.14), Inches(0.40))
-            tf_arr = arr_box.text_frame
-            tf_arr.margin_left = 0; tf_arr.margin_right = 0; tf_arr.margin_top = 0; tf_arr.margin_bottom = 0
-            p_arr = tf_arr.paragraphs[0]
-            p_arr.text = "➔"
-            p_arr.font.name = 'Arial'; p_arr.font.size = Pt(11); p_arr.font.bold = True; p_arr.font.color.rgb = C_MUTED
-
-    t_top = Inches(3.02)
-    t_h = Inches(3.80)
-    t_w = Inches(12.0)
-    table_shp = s3.shapes.add_table(7, 3, Inches(0.67), t_top, t_w, t_h)
+    # RIGHT: Production Technology Architecture Table
+    t_top = Inches(1.58)
+    t_h = Inches(5.22)
+    t_w = Inches(5.35)
+    t_left = Inches(7.32)
+    table_shp = s3.shapes.add_table(7, 3, t_left, t_top, t_w, t_h)
     table = table_shp.table
-    table.columns[0].width = Inches(2.2)
-    table.columns[1].width = Inches(4.3)
-    table.columns[2].width = Inches(5.5)
+    table.columns[0].width = Inches(1.35)
+    table.columns[1].width = Inches(2.05)
+    table.columns[2].width = Inches(1.95)
 
-    headers = ["Architecture Layer", "Production Technology Stack", "Engineering & Operational Rationale"]
+    headers = ["Layer", "Production Tech Stack", "Engineering Rationale"]
     for c_idx, h_text in enumerate(headers):
         cell = table.cell(0, c_idx)
         cell.fill.solid(); cell.fill.fore_color.rgb = C_NAVY
         p = cell.text_frame.paragraphs[0]
         p.text = h_text
-        p.font.name = 'Arial'; p.font.size = Pt(8.5); p.font.bold = True; p.font.color.rgb = C_WHITE
+        p.font.name = 'Arial'; p.font.size = Pt(7.8); p.font.bold = True; p.font.color.rgb = C_WHITE
 
     tech_matrix = [
-        ("Mobile & Web Client", "Vite + React 18 PWA / React Native Android Go", "Ultra-lightweight (<15 MB APK), offline-ready, runs smoothly on 2GB RAM phones."),
-        ("API Gateway & Services", "NestJS (Node.js 20+) Modular Microservices Architecture", "High-throughput asynchronous REST/GraphQL gateway, JWT + Argon2 security, DLT SMS."),
-        ("Persistence & GIS", "PostgreSQL + PostGIS (Spatial) + Prisma ORM", "ACID transactions, spatial hospital distance queries, drive-time and load balancing."),
-        ("Offline Storage & Queue", "SQLite / WatermelonDB (CRDTs) + Redis BullMQ", "Guaranteed local storage during network drops; event-based background synchronization."),
-        ("AI & Intelligence Layer", "Gemini 2.5 Flash + Bhashini Indic STT + Tesseract OCR", "Sub-second symptom extraction, vernacular Marathi voice dictation, scanned slip OCR."),
-        ("Protocols & Security", "ABDM Gateway (ABHA, HFR, HPR), FHIR R4, DPDP Act 2023", "National Health Authority compliant, encrypted health bundles, verifiable patient consent.")
+        ("Mobile & Web", "Vite + React 18 PWA / React Native Android Go", "Ultra-lightweight (<15 MB APK), offline-ready, runs on 2GB RAM phones."),
+        ("API Gateway", "NestJS (Node.js 20+) Modular Microservices", "High-throughput async REST/GraphQL, JWT + Argon2 security, DLT SMS."),
+        ("Persistence & GIS", "PostgreSQL 16 + PostGIS + Prisma ORM", "ACID transactions, spatial hospital distance queries, drive-time radius."),
+        ("Offline & Queue", "SQLite / WatermelonDB CRDTs + Redis BullMQ", "Guaranteed local storage during network drops; background sync workers."),
+        ("AI & Speech", "Gemini 2.5 Flash + Bhashini Indic STT + OCR", "Sub-second symptom extraction, vernacular Marathi voice dictation."),
+        ("Protocols & Security", "ABDM Gateway (ABHA, HFR), FHIR R4, DPDP Act", "National Health Authority compliant, encrypted health bundles, patient consent.")
     ]
 
     for r_idx, (layer, tech, rationale) in enumerate(tech_matrix, start=1):
@@ -323,14 +305,14 @@ def create_deck():
             cell.fill.solid(); cell.fill.fore_color.rgb = bg
             p = cell.text_frame.paragraphs[0]
             p.text = val
-            p.font.name = 'Arial'; p.font.size = Pt(8.0)
+            p.font.name = 'Arial'; p.font.size = Pt(7.2)
             if c_idx == 0:
                 p.font.bold = True; p.font.color.rgb = C_NAVY
             else:
                 p.font.color.rgb = C_DARK
 
     # -------------------------------------------------------------
-    # SLIDE 4: FEASIBILITY AND VIABILITY
+    # SLIDE 4: FEASIBILITY AND VIABILITY (WITH INFOGRAPHIC)
     # -------------------------------------------------------------
     s4 = prs.slides[3]
     clear_placeholder(s4)
@@ -347,58 +329,41 @@ def create_deck():
     p.text = "Analysis of Idea Feasibility, Potential Challenges & Risks, and Strategic Mitigation Measures"
     p.font.name = 'Arial'; p.font.size = Pt(10); p.font.bold = True; p.font.color.rgb = C_TEAL
 
-    # Left Column: Feasibility Analysis (3 Cards)
-    f_x = Inches(0.67)
-    f_w = Inches(5.1)
-    f_card_h = Inches(1.65)
-    f_gap = Inches(0.12)
-    start_y = Inches(1.58)
+    # LEFT: Deployment Feasibility Infographic
+    if os.path.exists(img_feasibility):
+        s4.shapes.add_picture(img_feasibility, Inches(0.67), Inches(1.58), Inches(6.0), Inches(3.38))
 
-    feas_cards = [
-        ("1. Operational Feasibility (Frontline Ready)", C_TEAL, C_TEAL_BG, [
-            "Replaces 8 duplicate paper registers with 50-second Marathi voice dictation.",
-            "Operates on existing government smartphones without purchasing specialized tablets.",
-            "Designed for low-literacy ASHAs with audio cues, icons, and automated SMS."
-        ]),
-        ("2. Technical Feasibility (Interoperable Rails)", C_BLUE, C_BLUE_BG, [
-            "Integrates directly with live national APIs: ABDM (67 Cr ABHA IDs) & Bhashini.",
-            "CRDT local replication guarantees zero data corruption during partial syncs.",
-            "Runs on proven open-source web and mobile architecture with MeitY cloud compliance."
-        ]),
-        ("3. Financial Viability (B2G Unit Economics)", C_NAVY, C_LIGHT_BG, [
-            "Funded via State NHM PIP Innovation budget + ABDM DHIS incentives (₹500/bed/mo).",
-            "District Operating Cost: ~₹18 Lakh/year vs. State Contract Value: ~₹35 Lakh/year.",
-            "48.5% operating margin supports field engineers and frontline worker training."
-        ])
+    # Left Bottom: Financial Viability & Public Health Economics Card
+    econ_box = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.67), Inches(5.05), Inches(6.0), Inches(1.75))
+    econ_box.fill.solid(); econ_box.fill.fore_color.rgb = C_TEAL_BG
+    econ_box.line.color.rgb = C_TEAL; econ_box.line.width = Pt(1.2)
+    tf_ec = econ_box.text_frame; tf_ec.word_wrap = True
+    tf_ec.margin_left = Inches(0.12); tf_ec.margin_right = Inches(0.12); tf_ec.margin_top = Inches(0.08)
+    p = tf_ec.paragraphs[0]
+    p.text = "SUSTAINABLE B2G FINANCIAL MODEL & OPERATIONAL VIABILITY"
+    p.font.name = 'Arial'; p.font.size = Pt(8.8); p.font.bold = True; p.font.color.rgb = C_TEAL
+    econ_bullets = [
+        "Operational Feasibility: Replaces 8 duplicate paper registers; works on existing smartphones.",
+        "Sustainable Funding: Funded via State NHM PIP Innovation budget + ABDM DHIS incentives (₹500/bed/mo).",
+        "District Unit Economics: ~₹18 Lakh/year district operating cost vs ~₹35 Lakh/year state contract.",
+        "48.5% operating margin directly funds village frontline worker training and field engineering support."
     ]
+    for eb in econ_bullets:
+        peb = tf_ec.add_paragraph()
+        peb.text = "• " + eb
+        peb.font.name = 'Arial'; peb.font.size = Pt(7.1); peb.font.color.rgb = C_DARK; peb.space_before = Pt(1.5)
 
-    for c_idx, (c_title, c_color, c_bg, c_bullets) in enumerate(feas_cards):
-        cy = start_y + c_idx * (f_card_h + f_gap)
-        card = s4.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, f_x, cy, f_w, f_card_h)
-        card.fill.solid(); card.fill.fore_color.rgb = c_bg
-        card.line.color.rgb = c_color; card.line.width = Pt(1.2)
-        tf = card.text_frame; tf.word_wrap = True
-        tf.margin_left = Inches(0.12); tf.margin_right = Inches(0.12); tf.margin_top = Inches(0.08)
-        p = tf.paragraphs[0]
-        p.text = c_title
-        p.font.name = 'Arial'; p.font.size = Pt(9.2); p.font.bold = True; p.font.color.rgb = c_color
-        for b in c_bullets:
-            pb = tf.add_paragraph()
-            pb.text = "• " + b
-            pb.font.name = 'Arial'; pb.font.size = Pt(7.8); pb.font.color.rgb = C_DARK; pb.space_before = Pt(1.5)
-
-    # Right Column: Risk Management Matrix Table
-    r_x = Inches(5.95)
-    r_w = Inches(6.72)
+    # RIGHT: Risk Management & Mitigation Matrix Table
+    r_x = Inches(6.82)
+    r_w = Inches(5.85)
     r_top = Inches(1.58)
-    r_h = Inches(5.20)
+    r_h = Inches(5.22)
     t_shp = s4.shapes.add_table(5, 3, r_x, r_top, r_w, r_h)
     t = t_shp.table
-    t.columns[0].width = Inches(1.5)
-    t.columns[1].width = Inches(2.2)
-    t.columns[2].width = Inches(3.02)
+    t.columns[0].width = Inches(1.25)
+    t.columns[1].width = Inches(2.20)
+    t.columns[2].width = Inches(2.40)
 
-    # Adjust row heights for tighter layout
     t.rows[0].height = Inches(0.40)
     for r in range(1, 5):
         t.rows[r].height = Inches(1.20)
@@ -409,7 +374,7 @@ def create_deck():
         cell.fill.solid(); cell.fill.fore_color.rgb = C_NAVY
         p = cell.text_frame.paragraphs[0]
         p.text = h_text
-        p.font.name = 'Arial'; p.font.size = Pt(8.5); p.font.bold = True; p.font.color.rgb = C_WHITE
+        p.font.name = 'Arial'; p.font.size = Pt(8.0); p.font.bold = True; p.font.color.rgb = C_WHITE
 
     risks = [
         ("Technical Risk", "Cellular blackout >7 days in deep tribal monsoon areas.", "Local SQLite retains 5,000 records encrypted; offline QR token + peer-to-peer sync at weekly PHC meet."),
@@ -425,7 +390,7 @@ def create_deck():
             cell.fill.solid(); cell.fill.fore_color.rgb = bg
             p = cell.text_frame.paragraphs[0]
             p.text = val
-            p.font.name = 'Arial'; p.font.size = Pt(7.8)
+            p.font.name = 'Arial'; p.font.size = Pt(7.4)
             if c_idx == 0:
                 p.font.bold = True
                 p.font.color.rgb = C_RED if "Clinical" in val or "Operational" in val else C_BLUE
@@ -433,7 +398,7 @@ def create_deck():
                 p.font.color.rgb = C_DARK
 
     # -------------------------------------------------------------
-    # SLIDE 5: IMPACT AND BENEFITS
+    # SLIDE 5: IMPACT AND BENEFITS (WITH INFOGRAPHIC & METRIC BADGES)
     # -------------------------------------------------------------
     s5 = prs.slides[4]
     clear_placeholder(s5)
@@ -450,18 +415,18 @@ def create_deck():
     p.text = "Potential Impact on Target Audience & Comprehensive Benefits (Social, Economic, Environmental, Administrative)"
     p.font.name = 'Arial'; p.font.size = Pt(10); p.font.bold = True; p.font.color.rgb = C_TEAL
 
-    # Hero KPI Cards (Top 4 Metrics)
+    # Top Row: 4 Hero KPI Metric Badges
     kpi_w = Inches(2.85)
-    kpi_h = Inches(1.40)
+    kpi_h = Inches(1.15)
     kpi_y = Inches(1.58)
     kpi_gap = Inches(0.20)
     kpi_start_x = Inches(0.67)
 
     kpis = [
-        ("< 10%", "Referral Drop-out", "Slashed from 48.2% baseline via closed-loop tracking & active navigation.", C_TEAL, C_TEAL_BG),
-        ("60%+", "OOPE Travel Reduction", "Saves rural families from debt traps via Coordinated One-Trip Care Bundles.", C_BLUE, C_BLUE_BG),
-        ("< 45 Min", "Hospital Wait Time", "Fast-track casualty triage bypasses 3.5-hour general OPD queues.", C_NAVY, C_LIGHT_BG),
-        ("100%", "Follow-up Compliance", "Automated counter-referral tasks sent to village ASHAs on patient discharge.", C_GREEN, RGBColor(236, 253, 245))
+        ("< 10%", "Referral Drop-out", "Slashed from 48.2% baseline via closed-loop tracking.", C_TEAL, C_TEAL_BG),
+        ("60%+", "OOPE Travel Cut", "Saves families from debt traps via Coordinated One-Trip.", C_BLUE, C_BLUE_BG),
+        ("< 45 Min", "Hospital Wait Time", "Fast-track casualty triage bypasses 3.5h general queues.", C_NAVY, C_LIGHT_BG),
+        ("100%", "Follow-up Compliance", "Automated counter-referral tasks sent to village ASHAs.", C_GREEN, RGBColor(236, 253, 245))
     ]
 
     for k_idx, (num, lbl, desc, clr, bg) in enumerate(kpis):
@@ -470,62 +435,55 @@ def create_deck():
         card.fill.solid(); card.fill.fore_color.rgb = bg
         card.line.color.rgb = clr; card.line.width = Pt(1.5)
         tf = card.text_frame; tf.word_wrap = True
-        tf.margin_left = Inches(0.12); tf.margin_right = Inches(0.12); tf.margin_top = Inches(0.08)
+        tf.margin_left = Inches(0.10); tf.margin_right = Inches(0.10); tf.margin_top = Inches(0.06)
         p = tf.paragraphs[0]
         p.text = num
-        p.font.name = 'Arial'; p.font.size = Pt(18); p.font.bold = True; p.font.color.rgb = clr
+        p.font.name = 'Arial'; p.font.size = Pt(16); p.font.bold = True; p.font.color.rgb = clr
         p2 = tf.add_paragraph()
         p2.text = lbl
-        p2.font.name = 'Arial'; p2.font.size = Pt(9.2); p2.font.bold = True; p2.font.color.rgb = C_NAVY
+        p2.font.name = 'Arial'; p2.font.size = Pt(8.5); p2.font.bold = True; p2.font.color.rgb = C_NAVY
         p3 = tf.add_paragraph()
         p3.text = desc
-        p3.font.name = 'Arial'; p3.font.size = Pt(7.5); p3.font.color.rgb = C_DARK; p3.space_before = Pt(2)
+        p3.font.name = 'Arial'; p3.font.size = Pt(7.0); p3.font.color.rgb = C_DARK; p3.space_before = Pt(1)
 
-    # 4-Quadrant Multi-Dimensional Benefits Matrix
-    q_y = Inches(3.12)
-    q_w = Inches(5.85)
-    q_h = Inches(1.80)
-    q_gap_y = Inches(0.12)
+    # Bottom Split: Infographic on Left + Multi-Tier Benefits Cards on Right
+    b_y = Inches(2.88)
+    if os.path.exists(img_impact):
+        s5.shapes.add_picture(img_impact, Inches(0.67), b_y, Inches(6.4), Inches(3.60))
+
+    # Right: 4-Tier Strategic Benefits (Stacked Cards)
+    rw = Inches(5.35)
+    rx = Inches(7.32)
+    card_h = Inches(0.85)
+    gap_y = Inches(0.07)
 
     quads = [
-        ("SOCIAL IMPACT: Maternal & Cardiac Lives Saved", Inches(0.67), q_y, C_RED, RGBColor(254, 242, 242), [
-            "Prevents maternal mortality (PPH, eclampsia) & cardiac deaths in tribal blocks (Melghat, Nandurbar).",
-            "Eliminates fear and confusion for illiterate citizens through vernacular voice guidance.",
-            "Empowers frontline women (ASHAs) as digital healthcare leaders in their community."
-        ]),
-        ("ECONOMIC IMPACT: Eliminating Healthcare Debt", Inches(6.82), q_y, C_BLUE, C_BLUE_BG, [
-            "Health expenses push 55 million Indians into poverty annually; platform cuts private jeep & repeat test costs.",
-            "Reduces tertiary hospital over-utilization by triaging treatable cases at primary PHC/CHC level.",
-            "Unlocks ABDM DHIS federal cash incentives (₹500/bed/mo) for participating state hospitals."
-        ]),
-        ("ENVIRONMENTAL IMPACT: Paperless Green Health", Inches(0.67), q_y + q_h + q_gap_y, C_GREEN, RGBColor(236, 253, 245), [
-            "Replaces millions of physical registers and paper referral slips with digital records.",
-            "Significantly cuts vehicular emissions and fuel consumption from repeated, failed hospital trips.",
-            "Eco-friendly server architecture optimized for low-power edge execution."
-        ]),
-        ("ADMINISTRATIVE IMPACT: Real-Time Governance", Inches(6.82), q_y + q_h + q_gap_y, C_NAVY, C_LIGHT_BG, [
-            "Live District Health Officer (DHO) bottleneck heatmaps surface specialist shortages & equipment outages.",
-            "Replaces delayed 45-day HMIS aggregate reports with actionable operational telemetry.",
-            "Provides accountability across secondary facilities for referral turnaround and bed readiness."
-        ])
+        ("SOCIAL IMPACT: Maternal & Cardiac Lives Saved", C_RED, RGBColor(254, 242, 242),
+         "Prevents maternal deaths (PPH, eclampsia) & cardiac crises in tribal blocks (Melghat, Nandurbar); vernacular voice guides illiterate families; empowers ASHAs."),
+        ("ECONOMIC IMPACT: Eliminating Healthcare Debt", C_BLUE, C_BLUE_BG,
+         "Cuts private transport and redundant diagnostic fees that push 55M into poverty yearly; unlocks ABDM DHIS hospital cash incentives (₹500/bed/mo)."),
+        ("ENVIRONMENTAL IMPACT: Paperless Green Health", C_GREEN, RGBColor(236, 253, 245),
+         "Replaces millions of paper registers with digital health records; slashes transit vehicular emissions from repeated, failed hospital trips."),
+        ("ADMINISTRATIVE IMPACT: Real-Time Governance", C_NAVY, C_LIGHT_BG,
+         "Live District Health Officer (DHO) bottleneck heatmaps surface specialist shortages & equipment outages; replaces delayed 45-day HMIS reports.")
     ]
 
-    for q_title, qx, qy, q_clr, q_bg, q_bullets in quads:
-        card = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, qx, qy, q_w, q_h)
+    for q_idx, (q_title, q_clr, q_bg, q_desc) in enumerate(quads):
+        qy = b_y + q_idx * (card_h + gap_y)
+        card = s5.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, rx, qy, rw, card_h)
         card.fill.solid(); card.fill.fore_color.rgb = q_bg
-        card.line.color.rgb = q_clr; card.line.width = Pt(1.2)
+        card.line.color.rgb = q_clr; card.line.width = Pt(1.0)
         tf = card.text_frame; tf.word_wrap = True
-        tf.margin_left = Inches(0.12); tf.margin_right = Inches(0.12); tf.margin_top = Inches(0.08)
+        tf.margin_left = Inches(0.10); tf.margin_right = Inches(0.10); tf.margin_top = Inches(0.05)
         p = tf.paragraphs[0]
         p.text = q_title
-        p.font.name = 'Arial'; p.font.size = Pt(9.2); p.font.bold = True; p.font.color.rgb = q_clr
-        for b in q_bullets:
-            pb = tf.add_paragraph()
-            pb.text = "• " + b
-            pb.font.name = 'Arial'; pb.font.size = Pt(7.8); pb.font.color.rgb = C_DARK; pb.space_before = Pt(1.5)
+        p.font.name = 'Arial'; p.font.size = Pt(8.0); p.font.bold = True; p.font.color.rgb = q_clr
+        pb = tf.add_paragraph()
+        pb.text = q_desc
+        pb.font.name = 'Arial'; pb.font.size = Pt(6.8); pb.font.color.rgb = C_DARK; pb.space_before = Pt(1.5)
 
     # -------------------------------------------------------------
-    # SLIDE 6: RESEARCH AND REFERENCES
+    # SLIDE 6: RESEARCH, REFERENCES & COMPETITIVE BENCHMARKING
     # -------------------------------------------------------------
     s6 = prs.slides[5]
     clear_placeholder(s6)
@@ -544,7 +502,7 @@ def create_deck():
 
     # Top: Competitive Comparison Matrix Table
     bench_top = Inches(1.58)
-    bench_h = Inches(2.55)
+    bench_h = Inches(2.35)
     bench_w = Inches(12.0)
     b_shp = s6.shapes.add_table(6, 6, Inches(0.67), bench_top, bench_w, bench_h)
     bt = b_shp.table
@@ -555,9 +513,9 @@ def create_deck():
     bt.columns[4].width = Inches(1.9)
     bt.columns[5].width = Inches(1.9)
 
-    bt.rows[0].height = Inches(0.35)
+    bt.rows[0].height = Inches(0.32)
     for r in range(1, 6):
-        bt.rows[r].height = Inches(0.44)
+        bt.rows[r].height = Inches(0.40)
 
     b_headers = ["Key Capability Dimension", "eSanjeevani (C-DAC)", "NIC e-Hospital", "Khushi Baby / CHT", "108 EMS Fleet", "SwasthyaSetu"]
     for c_idx, h_text in enumerate(b_headers):
@@ -566,7 +524,7 @@ def create_deck():
         cell.fill.fore_color.rgb = C_TEAL if c_idx == 5 else C_NAVY
         p = cell.text_frame.paragraphs[0]
         p.text = h_text
-        p.font.name = 'Arial'; p.font.size = Pt(8.0); p.font.bold = True; p.font.color.rgb = C_WHITE
+        p.font.name = 'Arial'; p.font.size = Pt(7.8); p.font.bold = True; p.font.color.rgb = C_WHITE
 
     bench_data = [
         ("Closed-Loop Physical Referral", "✕ None (Tele-advice only)", "✕ None (Internal OPD only)", "⚠ Partial (MCH only)", "✕ Transport only", "✓ Full Closed-Loop Tracking"),
@@ -584,7 +542,7 @@ def create_deck():
             cell.fill.fore_color.rgb = C_TEAL_BG if c_idx == 5 else bg
             p = cell.text_frame.paragraphs[0]
             p.text = val
-            p.font.name = 'Arial'; p.font.size = Pt(7.5)
+            p.font.name = 'Arial'; p.font.size = Pt(7.2)
             if c_idx == 0:
                 p.font.bold = True; p.font.color.rgb = C_NAVY
             elif c_idx == 5:
@@ -592,51 +550,59 @@ def create_deck():
             else:
                 p.font.color.rgb = C_RED if val.startswith("✕") else (C_GOLD if "⚠" in val else C_DARK)
 
-    # Bottom Section: Authoritative References (4 Cards)
-    ref_y = Inches(4.30)
-    ref_h = Inches(2.40)
-    ref_w = Inches(2.85)
-    ref_gap = Inches(0.20)
-    ref_start_x = Inches(0.67)
+    # Bottom Section: Infographic on Left + Authoritative Research Citations on Right
+    bot_y = Inches(4.10)
+    if os.path.exists(img_research):
+        s6.shapes.add_picture(img_research, Inches(0.67), bot_y, Inches(4.5), Inches(2.53))
+
+    # Right: 4 Authoritative References Cards in 2x2 Grid
+    ref_x = Inches(5.35)
+    rw_ref = Inches(3.60)
+    rh_ref = Inches(1.22)
+    rgap_x = Inches(0.12)
+    rgap_y = Inches(0.09)
 
     refs = [
         ("1. MoHFW Rural Health Statistics", C_BLUE, C_BLUE_BG, [
             ("Source:", " Health Dynamics of India 2022-23"),
-            ("Finding:", " Acute 79.9% shortfall of specialists at rural CHCs nationwide."),
-            ("Relevance:", " Validates why capacity-aware routing is the only viable allocation mechanism.")
+            ("Finding:", " Acute 79.9% shortfall of specialists at rural CHCs."),
+            ("Relevance:", " Validates why capacity-aware routing is essential.")
         ]),
         ("2. The Lancet Global Health", C_RED, RGBColor(254, 242, 242), [
             ("Source:", " Referral Pathways in Rural India (2020)"),
-            ("Finding:", " 48.2% of referred primary patients never reach secondary hospitals."),
-            ("Relevance:", " Provides empirical baseline for SwasthyaSetu closed-loop tracking.")
+            ("Finding:", " 48.2% of referred primary patients never reach hospital."),
+            ("Relevance:", " Direct empirical baseline for closed-loop tracking.")
         ]),
         ("3. National Health Accounts", C_NAVY, C_LIGHT_BG, [
             ("Source:", " NHA 2020-21 / Lancet Public Health"),
-            ("Finding:", " OOPE accounts for 47.1% of health spend; pushes 55M into poverty."),
-            ("Relevance:", " Proves need for Coordinated One-Trip care to slash private transport costs.")
+            ("Finding:", " OOPE is 47.1% of health spend; pushes 55M into debt."),
+            ("Relevance:", " Solved by Coordinated One-Trip Care Bundles.")
         ]),
         ("4. JMIR 2025 & ABDM Specs", C_TEAL, C_TEAL_BG, [
             ("Source:", " Li et al., JMIR 2025; ABDM FHIR R4"),
-            ("Finding:", " Bidirectional referral cuts transfer delay from 2.51 to 0.90 days."),
-            ("Relevance:", " Core blueprint for SwasthyaSetu 3-way visibility & ABHA integration.")
+            ("Finding:", " Bidirectional referral cuts transfer delay to 0.90 days."),
+            ("Relevance:", " Blueprint for SwasthyaSetu ABHA integration.")
         ])
     ]
 
     for r_idx, (r_title, r_clr, r_bg, r_lines) in enumerate(refs):
-        rx = ref_start_x + r_idx * (ref_w + ref_gap)
-        card = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, rx, ref_y, ref_w, ref_h)
+        col = r_idx % 2
+        row = r_idx // 2
+        rx_pos = ref_x + col * (rw_ref + rgap_x)
+        ry_pos = bot_y + row * (rh_ref + rgap_y)
+        card = s6.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, rx_pos, ry_pos, rw_ref, rh_ref)
         card.fill.solid(); card.fill.fore_color.rgb = r_bg
-        card.line.color.rgb = r_clr; card.line.width = Pt(1.2)
+        card.line.color.rgb = r_clr; card.line.width = Pt(1.0)
         tf = card.text_frame; tf.word_wrap = True
-        tf.margin_left = Inches(0.12); tf.margin_right = Inches(0.12); tf.margin_top = Inches(0.08)
+        tf.margin_left = Inches(0.08); tf.margin_right = Inches(0.08); tf.margin_top = Inches(0.05)
         p = tf.paragraphs[0]
         p.text = r_title
-        p.font.name = 'Arial'; p.font.size = Pt(8.8); p.font.bold = True; p.font.color.rgb = r_clr
+        p.font.name = 'Arial'; p.font.size = Pt(8.0); p.font.bold = True; p.font.color.rgb = r_clr
         for k, v in r_lines:
             pl = tf.add_paragraph()
-            pl.space_before = Pt(2.5)
-            r1 = pl.add_run(); r1.text = k; r1.font.name = 'Arial'; r1.font.size = Pt(7.5); r1.font.bold = True; r1.font.color.rgb = C_NAVY
-            r2 = pl.add_run(); r2.text = v; r2.font.name = 'Arial'; r2.font.size = Pt(7.2); r2.font.color.rgb = C_DARK
+            pl.space_before = Pt(1.5)
+            r1 = pl.add_run(); r1.text = k; r1.font.name = 'Arial'; r1.font.size = Pt(6.8); r1.font.bold = True; r1.font.color.rgb = C_NAVY
+            r2 = pl.add_run(); r2.text = v; r2.font.name = 'Arial'; r2.font.size = Pt(6.6); r2.font.color.rgb = C_DARK
 
     # -------------------------------------------------------------
     # SLIDE 7: DELETE TO SATISFY 6-SLIDE STRICT RULE
